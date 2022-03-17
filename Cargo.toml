@@ -1,0 +1,15 @@
+[package]
+name = "lightws"
+version = "0.1.0"
+authors = ["zephyr <i@zephyr.moe>"]
+description = "Lightweight websocket implement for proxy tools."
+repository = "https://github.com/zephyrchien/lightws"
+readme = "README.md"
+documentation = "https://docs.rs/lightws"
+keywords = ["websocket", "network", "proxy"]
+edition = "2021"
+license = "MIT"
+
+[dependencies]
+rand = "0.8"
+httparse = "1"
