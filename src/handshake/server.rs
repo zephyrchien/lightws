@@ -66,11 +66,11 @@ impl<'h, 'b: 'h, const N: usize> Response<'h, 'b, N> {
     /// Encode to a provided buffer, return the number of written bytes.
     ///
     /// Necessary headers, including `upgrade`, `connection`, and
-    /// `sec-websocket-accept` are written to the buffer in order,
-    /// then other headers(if any) are written to the buffer.
+    /// `sec-websocket-accept` are written to the buffer,
+    /// then other headers(if any) are written in order.
     ///
-    /// The Caller should make sure the buffer is large enough,
-    /// otherwise a `NotEnoughCapacity` error will be returned.
+    /// Caller should make sure the buffer is large enough,
+    /// otherwise a [`HandshakeError::NotEnoughCapacity`] error will be returned.
     pub fn encode(&self, buf: &mut [u8]) -> Result<usize, HandshakeError> {
         debug_assert!(buf.len() > 80);
 
@@ -109,12 +109,14 @@ impl<'h, 'b: 'h, const N: usize> Response<'h, 'b, N> {
     /// `sec-websocket-version` are parsed and checked,
     /// and stored in the struct. Optional headers
     /// (like `sec-websocket-protocol`) are stored in `other headers`.
+    /// After the parse, `other_headers` will be shrunk to
+    /// fit the number of stored headers.
     ///
-    /// The caller should make sure there is enough space
+    /// Caller should make sure there is enough space
     /// (default is [`MAX_ALLOW_HEADERS`]) to store headers,
     /// which could be specified by the const generic paramater.
-    /// If the buffer does not contain a full http response, a `NotEnoughData`
-    /// error will be returned.
+    /// If the buffer does not contain a complete http request,
+    /// a [`HandshakeError::NotEnoughData`] error will be returned.
     /// If the required headers(mentioned above) do not pass the check
     /// (case insensitive), other corresponding errors will be returned.
     pub fn decode(&mut self, buf: &'b [u8]) -> Result<usize, HandshakeError> {
