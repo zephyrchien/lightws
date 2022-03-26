@@ -63,14 +63,37 @@ impl PayloadLen {
 
     /// Read as 16-bit length.
     #[inline]
-    pub const fn from_byte2(buf: [u8; 2]) -> Self {
-        PayloadLen::Extended1(u16::from_be_bytes(buf))
-    }
+    pub const fn from_byte2(buf: [u8; 2]) -> Self { PayloadLen::Extended1(u16::from_be_bytes(buf)) }
 
     /// Read as 64-bit length.
     #[inline]
-    pub const fn from_byte8(buf: [u8; 8]) -> Self {
-        PayloadLen::Extended2(u64::from_be_bytes(buf))
+    pub const fn from_byte8(buf: [u8; 8]) -> Self { PayloadLen::Extended2(u64::from_be_bytes(buf)) }
+
+    /// Get value, as 8-bit length.
+    #[inline]
+    pub const fn to_u8(&self) -> u8 {
+        match self {
+            PayloadLen::Standard(v) => *v,
+            _ => unreachable!(),
+        }
+    }
+
+    /// Get value, as 16-bit length.
+    #[inline]
+    pub const fn to_u16(&self) -> u16 {
+        match self {
+            PayloadLen::Extended1(v) => *v,
+            _ => unreachable!(),
+        }
+    }
+
+    /// Get value, as 64-bit length.
+    #[inline]
+    pub const fn to_u64(&self) -> u64 {
+        match self {
+            PayloadLen::Extended2(v) => *v,
+            _ => unreachable!(),
+        }
     }
 }
 

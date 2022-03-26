@@ -81,8 +81,7 @@ mod test {
 
         for i in (1..=1024).filter(|x| 4096 % x == 0) {
             let n = 4096 / i;
-            let data: Vec<u8> =
-                std::iter::repeat(rand::random::<u8>()).take(i).collect();
+            let data: Vec<u8> = std::iter::repeat(rand::random::<u8>()).take(i).collect();
 
             let mut writer = Writer::new(&mut buf);
             let mut write_n = 0;

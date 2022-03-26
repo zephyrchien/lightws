@@ -128,9 +128,7 @@ impl<'h, 'b: 'h, const N: usize> Response<'h, 'b, N> {
         // return value
         let decode_n = match response.parse(buf)? {
             httparse::Status::Complete(n) => n,
-            httparse::Status::Partial => {
-                return Err(HandshakeError::NotEnoughData)
-            }
+            httparse::Status::Partial => return Err(HandshakeError::NotEnoughData),
         };
 
         // check version, should be HTTP/1.1
@@ -165,19 +163,12 @@ impl<'h, 'b: 'h, const N: usize> Response<'h, 'b, N> {
         if !required_headers.iter().all(|h| !h.value.is_empty()) {
             handshake_check!(upgrade_hdr, HandshakeError::Upgrade);
             handshake_check!(connection_hdr, HandshakeError::Connection);
-            handshake_check!(
-                sec_accept_hdr,
-                HandshakeError::SecWebSocketAccept
-            );
+            handshake_check!(sec_accept_hdr, HandshakeError::SecWebSocketAccept);
         }
 
         // check header value (case insensitive)
         // ref: https://datatracker.ietf.org/doc/html/rfc6455#section-4.1
-        handshake_check!(
-            upgrade_hdr,
-            HEADER_UPGRADE_VALUE,
-            HandshakeError::Upgrade
-        );
+        handshake_check!(upgrade_hdr, HEADER_UPGRADE_VALUE, HandshakeError::Upgrade);
 
         handshake_check!(
             connection_hdr,
@@ -191,12 +182,11 @@ impl<'h, 'b: 'h, const N: usize> Response<'h, 'b, N> {
         // shrink header reference
         let other_header_len = headers.len() - required_headers.len();
 
-        // remove lifetime here, this does not affect that
-        // &mut other_headers live longer than &mut self
+        // remove lifetime here, remember that
+        // &mut other_headers lives longer than &mut self
         let other_headers: &'h mut [HttpHeader<'b>] =
             unsafe { &mut *(self.other_headers as *mut _) };
-        self.other_headers =
-            unsafe { other_headers.get_unchecked_mut(0..other_header_len) };
+        self.other_headers = unsafe { other_headers.get_unchecked_mut(0..other_header_len) };
 
         Ok(decode_n)
     }

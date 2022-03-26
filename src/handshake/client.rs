@@ -151,9 +151,7 @@ impl<'h, 'b: 'h, const N: usize> Request<'h, 'b, N> {
         // return value
         let decode_n = match request.parse(buf)? {
             httparse::Status::Complete(n) => n,
-            httparse::Status::Partial => {
-                return Err(HandshakeError::NotEnoughData)
-            }
+            httparse::Status::Partial => return Err(HandshakeError::NotEnoughData),
         };
 
         // check method
@@ -192,19 +190,12 @@ impl<'h, 'b: 'h, const N: usize> Request<'h, 'b, N> {
             handshake_check!(upgrade_hdr, HandshakeError::Upgrade);
             handshake_check!(connection_hdr, HandshakeError::Connection);
             handshake_check!(sec_key_hdr, HandshakeError::SecWebSocketKey);
-            handshake_check!(
-                sec_version_hdr,
-                HandshakeError::SecWebSocketVersion
-            );
+            handshake_check!(sec_version_hdr, HandshakeError::SecWebSocketVersion);
         }
 
         // check header value (case insensitive)
         // ref: https://datatracker.ietf.org/doc/html/rfc6455#section-4.1
-        handshake_check!(
-            upgrade_hdr,
-            HEADER_UPGRADE_VALUE,
-            HandshakeError::Upgrade
-        );
+        handshake_check!(upgrade_hdr, HEADER_UPGRADE_VALUE, HandshakeError::Upgrade);
 
         handshake_check!(
             connection_hdr,
@@ -226,12 +217,11 @@ impl<'h, 'b: 'h, const N: usize> Request<'h, 'b, N> {
         // shrink header reference
         let other_header_len = headers.len() - required_headers.len();
 
-        // remove lifetime here, this does not affect that
-        // &mut other_headers live longer than &mut self
+        // remove lifetime here, remember that
+        // &mut other_headers lives longer than &mut self
         let other_headers: &'h mut [HttpHeader<'b>] =
             unsafe { &mut *(self.other_headers as *mut _) };
-        self.other_headers =
-            unsafe { other_headers.get_unchecked_mut(0..other_header_len) };
+        self.other_headers = unsafe { other_headers.get_unchecked_mut(0..other_header_len) };
 
         Ok(decode_n)
     }
@@ -272,10 +262,7 @@ mod test {
                         .unwrap();
                 }};
             }
-            match_other!(
-                b"sec-websocket-accept",
-                b"s3pPLMBiTxaQ9kYGzzhZRbK+xOo="
-            );
+            match_other!(b"sec-websocket-accept", b"s3pPLMBiTxaQ9kYGzzhZRbK+xOo=");
 
             let mut buf: Vec<u8> = vec![0; 0x4000];
             let encode_n = request.encode(&mut buf).unwrap();

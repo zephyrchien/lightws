@@ -46,17 +46,12 @@ trait HeaderHelper {
 impl<'h> HttpHeader<'h> {
     /// Constructor, take provided name and value.
     #[inline]
-    pub const fn new(name: &'h [u8], value: &'h [u8]) -> Self {
-        Self { name, value }
-    }
+    pub const fn new(name: &'h [u8], value: &'h [u8]) -> Self { Self { name, value } }
 
     /// Total number of bytes(name + value + sp).
     #[inline]
     pub const fn len(&self) -> usize {
-        self.name.len()
-            + self.value.len()
-            + HTTP_HEADER_SP.len()
-            + HTTP_LINE_BREAK.len()
+        self.name.len() + self.value.len() + HTTP_HEADER_SP.len() + HTTP_LINE_BREAK.len()
     }
 
     /// Create [`MAX_ALLOW_HEADERS`] empty headers.
@@ -67,8 +62,7 @@ impl<'h> HttpHeader<'h> {
 
     /// Create N empty headers.
     #[inline]
-    pub const fn new_custom_storage<const N: usize>() -> [HttpHeader<'static>; N]
-    {
+    pub const fn new_custom_storage<const N: usize>() -> [HttpHeader<'static>; N] {
         [EMPTY_HEADER; N]
     }
 }

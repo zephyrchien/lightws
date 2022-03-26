@@ -1,6 +1,6 @@
 use std::fmt::{Display, Formatter};
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum FrameError {
     IllegalFin,
 
@@ -8,9 +8,13 @@ pub enum FrameError {
 
     IllegalOpCode,
 
+    IllegalData,
+
     NotEnoughData,
 
     NotEnoughCapacity,
+
+    UnsupportedOpcode,
 }
 
 impl Display for FrameError {
@@ -20,11 +24,23 @@ impl Display for FrameError {
             IllegalFin => write!(f, "Illegal fin value"),
             IllegalMask => write!(f, "Illegal mask value"),
             IllegalOpCode => write!(f, "Illegal opcode value"),
+            IllegalData => write!(f, "Illegal data"),
             NotEnoughData => write!(f, "Not enough data to parse"),
             NotEnoughCapacity => write!(f, "Not enough space to write to"),
+            UnsupportedOpcode => write!(
+                f,
+                "Unsupported opcode, only support binary, ping, pong, close"
+            ),
         }
     }
 }
 
 // use default impl
 impl std::error::Error for FrameError {}
+
+impl From<FrameError> for std::io::Error {
+    fn from(e: FrameError) -> Self {
+        use std::io::{Error, ErrorKind};
+        Error::new(ErrorKind::Other, e)
+    }
+}

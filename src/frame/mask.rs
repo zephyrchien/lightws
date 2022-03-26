@@ -88,8 +88,7 @@ mod test {
     #[test]
     fn mask_byte() {
         let key: [u8; 4] = rand::random();
-        let buf: Vec<u8> =
-            std::iter::repeat(rand::random::<u8>()).take(1024).collect();
+        let buf: Vec<u8> = std::iter::repeat(rand::random::<u8>()).take(1024).collect();
 
         assert_eq!(buf.len(), 1024);
 
@@ -104,8 +103,7 @@ mod test {
     fn mask_byte4() {
         for i in 0..4096 {
             let key: [u8; 4] = rand::random();
-            let buf: Vec<u8> =
-                std::iter::repeat(rand::random::<u8>()).take(i).collect();
+            let buf: Vec<u8> = std::iter::repeat(rand::random::<u8>()).take(i).collect();
 
             assert_eq!(buf.len(), i);
 
