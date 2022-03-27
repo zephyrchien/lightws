@@ -3,7 +3,7 @@
 mod read;
 mod write;
 mod state;
-mod common;
+mod detail;
 
 use std::marker::PhantomData;
 use state::{ReadState, WriteState, HeartBeat};
@@ -47,9 +47,26 @@ impl RoleHelper for Server {
 
 /// Websocket stream.
 ///
-/// This is a simple wrapper of the underlying connection,
-/// with small buffers on stack which save state.
+/// This is a simple wrapper of the underlying IO source,
+/// using small stack buffers to save states.
 ///
+/// It is transparent to call `Read` or `Write` on Stream:
+///
+/// ```ignore
+/// {
+///     // establish connection, handshake
+///     let stream = ...
+///     // read some data
+///     stream.read(&mut buf);
+///     // write some data
+///     stream.write(&buf);
+/// }
+/// ```
+///
+/// One `Read` or `Write` leads to **at most One**
+/// operation(or syscall) on the underlying IO source.
+/// Stream itself does not buffer any payload data during
+/// a `Read` or `Write`, so there is no extra heap allocation.
 pub struct Stream<IO, Role> {
     io: IO,
     read_state: ReadState,

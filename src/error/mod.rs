@@ -8,14 +8,13 @@ pub use frame::FrameError;
 pub use handshake::HandshakeError;
 
 use std::fmt::{Display, Formatter};
+use std::convert::Infallible;
 
 #[derive(Debug)]
 pub enum Error {
     Frame(FrameError),
 
     Handshake(HandshakeError),
-
-    Io(std::io::Error),
 }
 
 impl From<FrameError> for Error {
@@ -26,17 +25,12 @@ impl From<HandshakeError> for Error {
     fn from(e: HandshakeError) -> Self { Error::Handshake(e) }
 }
 
-impl From<std::io::Error> for Error {
-    fn from(e: std::io::Error) -> Error { Error::Io(e) }
-}
-
 impl Display for Error {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         use Error::*;
         match self {
             Frame(e) => write!(f, "Frame error: {}", e),
             Handshake(e) => write!(f, "Handshake error: {}", e),
-            Io(e) => write!(f, "Io error: {}", e),
         }
     }
 }
@@ -48,7 +42,17 @@ impl std::error::Error for Error {
         match self {
             Frame(e) => e.source(),
             Handshake(e) => e.source(),
-            Io(e) => e.source(),
         }
     }
+}
+
+impl From<Error> for std::io::Error {
+    fn from(e: Error) -> Self {
+        use std::io::{Error, ErrorKind};
+        Error::new(ErrorKind::Other, e)
+    }
+}
+
+impl From<Error> for Result<Infallible, std::io::Error> {
+    fn from(e: Error) -> Self { Err(e.into()) }
 }

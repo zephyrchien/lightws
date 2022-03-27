@@ -37,10 +37,3 @@ impl Display for FrameError {
 
 // use default impl
 impl std::error::Error for FrameError {}
-
-impl From<FrameError> for std::io::Error {
-    fn from(e: FrameError) -> Self {
-        use std::io::{Error, ErrorKind};
-        Error::new(ErrorKind::Other, e)
-    }
-}

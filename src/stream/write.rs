@@ -1,11 +1,7 @@
-use std::io::Write;
-use std::io::Result;
-use std::io::IoSlice;
+use std::io::{Write, Result};
 
-use super::Stream;
-use super::RoleHelper;
-use super::WriteState;
-use super::common::{min_len, write_data_frame};
+use super::{Stream, RoleHelper};
+use super::detail::write_some;
 
 impl<IO: Write, Role: RoleHelper> Write for Stream<IO, Role> {
     /// Write some data to the underlying IO source,
@@ -18,65 +14,7 @@ impl<IO: Write, Role: RoleHelper> Write for Stream<IO, Role> {
     /// Frame head will be generated automatically,
     /// according to the length of the provided buffer.
     fn write(&mut self, buf: &[u8]) -> Result<usize> {
-        match self.write_state {
-            // always returns 0
-            WriteState::WriteZero => Ok(0),
-            // create a new frame
-            WriteState::WriteHead(mut head_store) => {
-                // data frame length depends on provided buffer length
-                let frame_len = buf.len();
-
-                if head_store.is_empty() {
-                    write_data_frame::<Role>(&mut head_store, frame_len as u64);
-                }
-                // frame head(maybe partial) + payload
-                let iovec = [IoSlice::new(head_store.read()), IoSlice::new(buf)];
-                let write_n = self.io.write_vectored(&iovec)?;
-                let head_len = head_store.rd_left() as usize;
-
-                // write zero ?
-                if write_n == 0 {
-                    self.write_state = WriteState::WriteZero;
-                    return Ok(0);
-                }
-
-                // frame head is not written completely
-                if write_n < head_len {
-                    head_store.advance_rd_pos(write_n);
-                    self.write_state = WriteState::WriteHead(head_store);
-                    return Ok(0);
-                }
-
-                // frame has been written completely
-                let write_n = write_n - head_len;
-
-                // all data written ?
-                if write_n == frame_len {
-                    self.write_state = WriteState::new();
-                } else {
-                    self.write_state = WriteState::WriteData((frame_len - write_n) as u64);
-                }
-
-                Ok(write_n)
-            }
-            // continue to write to the same frame
-            WriteState::WriteData(next) => {
-                let len = min_len(buf.len(), next);
-                let write_n = self.io.write(&buf[..len])?;
-                // write zero ?
-                if write_n == 0 {
-                    self.write_state = WriteState::WriteZero;
-                    return Ok(0);
-                }
-                // all data written ?
-                if next == write_n as u64 {
-                    self.write_state = WriteState::new()
-                } else {
-                    self.write_state = WriteState::WriteData(next - write_n as u64)
-                }
-                Ok(write_n)
-            }
-        }
+        write_some(self, |io, iovec| io.write_vectored(iovec), buf)
     }
 
     /// The writer does not buffer any data, simply flush
