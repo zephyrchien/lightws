@@ -2,7 +2,7 @@
 name = "lightws"
 version = "0.2.0"
 authors = ["zephyr <i@zephyr.moe>"]
-description = "Lightweight websocket implement for proxy tools."
+description = "Lightweight websocket implement for stream transmission."
 repository = "https://github.com/zephyrchien/lightws"
 readme = "README.md"
 documentation = "https://docs.rs/lightws"

@@ -2,7 +2,7 @@
 
 [![Released API docs](https://docs.rs/lightws/badge.svg)](https://docs.rs/lightws)
 
-Lightweight websocket implement for proxy tools.
+Lightweight websocket implement for stream transmission.
 
 ## Features
 
