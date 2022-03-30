@@ -6,44 +6,8 @@ mod state;
 mod detail;
 
 use std::marker::PhantomData;
+use crate::role::RoleHelper;
 use state::{ReadState, WriteState, HeartBeat};
-use crate::frame::Mask;
-
-/// Simple Client.
-pub struct Client;
-
-/// Simple Server.
-pub struct Server;
-
-/// Custom client or server.
-pub trait RoleHelper {
-    const SHORT_FRAME_HEAD_LEN: u8;
-    const COMMON_FRAME_HEAD_LEN: u8;
-    const LONG_FRAME_HEAD_LEN: u8;
-
-    fn new_write_mask() -> Mask;
-}
-
-impl RoleHelper for Client {
-    const SHORT_FRAME_HEAD_LEN: u8 = 2;
-    const COMMON_FRAME_HEAD_LEN: u8 = 2 + 2;
-    const LONG_FRAME_HEAD_LEN: u8 = 2 + 8;
-
-    /// Client uses a zero mask key, so that the sender/receiver
-    /// does not need to mask/unmask the payload.
-    #[inline]
-    fn new_write_mask() -> Mask { Mask::Skip }
-}
-
-impl RoleHelper for Server {
-    const SHORT_FRAME_HEAD_LEN: u8 = 2 + 4;
-    const COMMON_FRAME_HEAD_LEN: u8 = 2 + 2 + 4;
-    const LONG_FRAME_HEAD_LEN: u8 = 2 + 8 + 4;
-
-    /// Server should not mask the payload.
-    #[inline]
-    fn new_write_mask() -> Mask { Mask::None }
-}
 
 /// Websocket stream.
 ///
@@ -115,6 +79,7 @@ mod test {
     use super::*;
     use std::io::{Read, Write, Result};
     use crate::frame::*;
+    use crate::role::*;
 
     pub struct LimitReadWriter {
         pub buf: Vec<u8>,

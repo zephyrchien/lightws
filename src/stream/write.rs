@@ -44,9 +44,9 @@ impl<IO: Write, Role: RoleHelper> Write for Stream<IO, Role> {
 #[cfg(test)]
 mod test {
     use super::*;
-    use super::super::{Client, Server, RoleHelper};
     use super::super::test::{LimitReadWriter, make_frame};
     use crate::frame::*;
+    use crate::role::*;
     use std::io::Write;
 
     #[test]

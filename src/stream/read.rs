@@ -102,9 +102,9 @@ impl<IO: Read, Role: RoleHelper> Read for Stream<IO, Role> {
 mod test {
     use std::io::Read;
     use super::*;
-    use super::super::{Client, Server};
     use super::super::test::{LimitReadWriter, make_frame};
     use crate::frame::*;
+    use crate::role::*;
 
     #[test]
     fn read_from_stream() {
