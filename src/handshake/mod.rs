@@ -1,10 +1,10 @@
 //! Websocket handshake.
 
-pub mod client;
-pub mod server;
+pub mod request;
+pub mod response;
 
-pub use client::Request;
-pub use server::Response;
+pub use request::Request;
+pub use response::Response;
 
 /// 32
 pub const MAX_ALLOW_HEADERS: usize = 32;
