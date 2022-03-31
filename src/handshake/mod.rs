@@ -1,10 +1,12 @@
 //! Websocket handshake.
 
+pub mod key;
 pub mod request;
 pub mod response;
 
 pub use request::Request;
 pub use response::Response;
+pub use key::{new_sec_key, derive_accept_key};
 
 /// 32
 pub const MAX_ALLOW_HEADERS: usize = 32;
