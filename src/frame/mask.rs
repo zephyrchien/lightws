@@ -36,9 +36,9 @@ impl Mask {
     }
 }
 
-/// Generate a new random key.
+/// Generate a new random mask key.
 #[inline]
-pub fn new_rand_key() -> [u8; 4] { rand::random::<[u8; 4]>() }
+pub fn new_mask_key() -> [u8; 4] { rand::random::<[u8; 4]>() }
 
 /// Mask the buffer, byte by byte.
 #[inline]

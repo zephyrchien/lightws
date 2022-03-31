@@ -231,14 +231,14 @@ mod test {
         let head = FrameHead {
             fin: Fin::Y,
             opcode: OpCode::Binary,
-            mask: Mask::Key(mask::new_rand_key()),
+            mask: Mask::Key(mask::new_mask_key()),
             length: PayloadLen::from_num(4096),
         };
 
         let head2 = FrameHead {
             fin: Fin::N,
             opcode: OpCode::Binary,
-            mask: Mask::Key(mask::new_rand_key()),
+            mask: Mask::Key(mask::new_mask_key()),
             length: PayloadLen::from_num(64),
         };
 
