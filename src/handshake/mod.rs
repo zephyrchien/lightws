@@ -203,7 +203,7 @@ pub mod static_headers {
 
         (HEADER_SEC_WEBSOCKET_ACCEPT_NAME => b"sec-websocket-accept");
 
-        (HEADER_SEC_WEBSOCKET_VERSION_NAME => b"sec-webSocket-version");
+        (HEADER_SEC_WEBSOCKET_VERSION_NAME => b"sec-websocket-version");
     }
 
     // header value
