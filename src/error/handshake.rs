@@ -31,6 +31,8 @@ pub enum HandshakeError {
     NotEnoughCapacity,
 
     Httparse(httparse::Error),
+
+    Manual(&'static str),
 }
 
 impl Display for HandshakeError {
@@ -69,6 +71,8 @@ impl Display for HandshakeError {
             NotEnoughCapacity => write!(f, "Not enough space to write to"),
 
             Httparse(e) => write!(f, "Http parse error: {}", e),
+
+            Manual(s) => write!(f, "Manual error: {}", s),
         }
     }
 }

@@ -40,8 +40,8 @@ impl std::error::Error for Error {
         use Error::*;
 
         match self {
-            Frame(e) => e.source(),
-            Handshake(e) => e.source(),
+            Frame(e) => Some(e),
+            Handshake(e) => Some(e),
         }
     }
 }

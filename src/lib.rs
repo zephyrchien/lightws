@@ -1,5 +1,4 @@
 // #![warn(missing_docs)]
-#![feature(const_ptr_offset)]
 #![feature(const_slice_from_raw_parts)]
 #![feature(const_mut_refs)]
 #![feature(const_slice_index)]
@@ -7,17 +6,17 @@
 #![feature(read_buf)]
 
 //! Lightweight websocket implement for proxy tools.
-//! 
+//!
 //! ## Features
 //! - Avoid heap allocation.
 //! - Avoid buffering frame payload.
 //! - Use vectored-io if available.
 //! - Transparent Read/Write over the underlying IO source.
-//! 
+//!
 //! ## High-level API
-//! 
+//!
 //! Stream:
-//! 
+//!
 //! ```ignore
 //! {
 //!     // establish connection, handshake
@@ -28,11 +27,11 @@
 //!     stream.write(&buf);
 //! }
 //! ```
-//! 
+//!
 //! ## Low-level API
-//! 
+//!
 //! FrameHead(Fin, OpCode, Mask, PayloadLen):
-//! 
+//!
 //! ```ignore
 //! {
 //!     // encode a frame head
@@ -40,21 +39,21 @@
 //!     let offset = unsafe {
 //!         head.encode_unchecked(&mut buf);
 //!     }
-//! 
+//!
 //!     // decode a frame head
 //!     let (head, offset) = FrameHead::decode(&buf).unwrap();
 //! }
 //! ```
-//! 
+//!
 //! Handshake:
-//! 
+//!
 //! ```ignore
 //! {
 //!     // make a client handshake request
 //!     let mut custom_headers = HttpHeader::new_storage();
 //!     let request = Request::new(&mut custom_headers);
 //!     let offset = request.encode(&mut buf).unwrap();
-//! 
+//!
 //!     // parse a server handshake response
 //!     let mut custom_headers = HttpHeader::new_storage();
 //!     let mut response = Response::new(&mut custom_headers);
@@ -64,7 +63,9 @@
 
 mod bleed;
 
+pub mod role;
 pub mod error;
 pub mod frame;
 pub mod stream;
+pub mod endpoint;
 pub mod handshake;
