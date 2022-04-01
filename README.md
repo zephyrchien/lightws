@@ -30,6 +30,8 @@ Lightweight websocket implement for stream transmission.
 
 [frame, handshake]
 
+Frame:
+
 ```rust
 {
     // encode a frame head

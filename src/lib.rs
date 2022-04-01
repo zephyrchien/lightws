@@ -35,6 +35,8 @@
 //! - [`frame`]
 //! - [`handshake`]
 //!
+//! Frame:
+//! 
 //! ```ignore
 //! {
 //!     // encode a frame head

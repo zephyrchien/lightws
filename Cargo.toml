@@ -15,3 +15,7 @@ rand = "0.8"
 sha1 = "0.10"
 base64 = "0.20.0-alpha.1"
 httparse = "1"
+
+[dev-dependencies]
+log = "0.4"
+env_logger = "0.9"

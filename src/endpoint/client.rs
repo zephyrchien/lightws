@@ -11,7 +11,7 @@ use crate::stream::Stream;
 
 impl<IO: Read + Write, Role: ClientRole> Endpoint<IO, Role> {
     /// Send websocket upgrade request to IO source, return
-    /// the number of bytes transferred.
+    /// the number of bytes transmitted.
     /// Request data are encoded to the provided buffer.
     /// This function will block until all data
     /// are written to IO source or an error occurs.
@@ -20,7 +20,7 @@ impl<IO: Read + Write, Role: ClientRole> Endpoint<IO, Role> {
     }
 
     /// Receive websocket upgrade response from IO source, return
-    /// the number of bytes transferred.
+    /// the number of bytes transmitted.
     /// Received data are stored in the provided buffer, and parsed
     /// as [`Response`]. **Caller must not modify the buffer while
     /// `response` is in use, otherwise it is undefined behavior!!**
