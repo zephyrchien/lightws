@@ -4,6 +4,7 @@ mod read;
 mod write;
 mod state;
 mod detail;
+mod special;
 
 use std::marker::PhantomData;
 use crate::role::RoleHelper;
