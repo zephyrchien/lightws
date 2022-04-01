@@ -1,3 +1,5 @@
+//! Key exchange.
+
 use super::GUID;
 use base64::engine::DEFAULT_ENGINE;
 use sha1::{Digest, Sha1};

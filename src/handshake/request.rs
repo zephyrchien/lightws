@@ -1,4 +1,4 @@
-//! Client handshake.
+//! Client upgrade request.
 //!
 //! From [RFC-6455 Section 4.1](https://datatracker.ietf.org/doc/html/rfc6455#section-4.1):
 //!

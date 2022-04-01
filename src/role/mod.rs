@@ -1,3 +1,5 @@
+//! Websocket client or server.
+
 use crate::frame::Mask;
 
 /// Client or Server marker.

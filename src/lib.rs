@@ -15,12 +15,14 @@
 //!
 //! ## High-level API
 //!
-//! Stream:
+//! - [`role`]
+//! - [`endpoint`]
+//! - [`stream`]
 //!
 //! ```ignore
 //! {
-//!     // establish connection, handshake
-//!     let stream = ...
+//!     // handshake
+//!     let stream = Endpoint<TcpStream, Client>::connect(tcp, buf, host, path)?;
 //!     // read some data
 //!     stream.read(&mut buf);
 //!     // write some data
@@ -30,7 +32,8 @@
 //!
 //! ## Low-level API
 //!
-//! FrameHead(Fin, OpCode, Mask, PayloadLen):
+//! - [`frame`]
+//! - [`handshake`]
 //!
 //! ```ignore
 //! {

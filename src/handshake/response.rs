@@ -1,4 +1,4 @@
-//! Server handshake.
+//! Server upgrade response.
 //!
 //! From [RFC-6455 Section 4.2](https://datatracker.ietf.org/doc/html/rfc6455#section-4.2):
 //!

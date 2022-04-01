@@ -13,12 +13,12 @@ Lightweight websocket implement for stream transmission.
 
 ## High-level API
 
-Stream:
+[role, endpoint, stream]
 
 ```rust
 {
-    // establish connection, handshake
-    let stream = ...
+    // handshake
+    let stream = Endpoint<TcpStream, Client>::connect(tcp, buf, host, path)?;
     // read some data
     stream.read(&mut buf);
     // write some data
@@ -28,7 +28,7 @@ Stream:
 
 ## Low-level API
 
-FrameHead(Fin, OpCode, Mask, PayloadLen):
+[frame, handshake]
 
 ```rust
 {
