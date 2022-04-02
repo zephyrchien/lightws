@@ -1,5 +1,7 @@
 # Lightws
 
+![Lightws](https://github.com/zephyrchien/lightws/workflows/ci/badge.svg)
+![Lightws](https://github.com/zephyrchien/lightws/workflows/build/badge.svg)
 [![Released API docs](https://docs.rs/lightws/badge.svg)](https://docs.rs/lightws)
 
 Lightweight websocket implement for stream transmission.
