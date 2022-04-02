@@ -2,13 +2,21 @@
 
 mod read;
 mod write;
+
 mod state;
 mod detail;
 mod special;
 
+cfg_if::cfg_if! {
+    if #[cfg(feature = "tokio")] {
+        mod async_read;
+        mod async_write;
+    }
+}
+
 use std::marker::PhantomData;
-use crate::role::RoleHelper;
 use state::{ReadState, WriteState, HeartBeat};
+use crate::role::RoleHelper;
 
 /// Websocket stream.
 ///
