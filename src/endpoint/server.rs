@@ -1,4 +1,5 @@
 use std::io::{Read, Write, Result};
+use std::task::Poll;
 
 use super::detail;
 use super::Endpoint;
@@ -16,7 +17,10 @@ impl<IO: Read + Write, Role: ServerRole> Endpoint<IO, Role> {
     /// This function will block until all data
     /// are written to IO source or an error occurs.
     pub fn send_response(io: &mut IO, buf: &mut [u8], response: &Response) -> Result<usize> {
-        detail::send_response(io, buf, response, |io, buf| io.write(buf))
+        match detail::send_response(io, buf, response, |io, buf| io.write(buf).into()) {
+            Poll::Ready(x) => x,
+            Poll::Pending => unreachable!(),
+        }
     }
 
     /// Receive websocket upgrade request from IO source, return
@@ -31,7 +35,10 @@ impl<IO: Read + Write, Role: ServerRole> Endpoint<IO, Role> {
         buf: &'b mut [u8],
         request: &mut Request<'h, 'b>,
     ) -> Result<usize> {
-        detail::recv_request(io, buf, request, |io, buf| io.read(buf))
+        match detail::recv_request(io, buf, request, |io, buf| io.read(buf).into()) {
+            Poll::Ready(x) => x,
+            Poll::Pending => unreachable!(),
+        }
     }
 
     /// Perform a simple websocket server handshake, return a new websocket stream.

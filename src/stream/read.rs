@@ -1,4 +1,5 @@
 use std::io::{Read, Result};
+use std::task::Poll;
 
 use super::{Stream, RoleHelper};
 use super::detail::read_some;
@@ -17,7 +18,10 @@ impl<IO: Read, Role: RoleHelper> Read for Stream<IO, Role> {
     /// which could be checked via [`Stream::is_read_end`],
     /// [`Stream::is_read_close`], [`Stream::is_read_eof`].
     fn read(&mut self, buf: &mut [u8]) -> Result<usize> {
-        read_some(self, |io, buf| io.read(buf), buf)
+        match read_some(self, |io, buf| io.read(buf).into(), buf) {
+            Poll::Ready(x) => x,
+            Poll::Pending => unreachable!(),
+        }
     }
 
     /// Override default implement, exit when reaching `EOF`

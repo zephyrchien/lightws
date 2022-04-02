@@ -1,4 +1,5 @@
 use std::io::{Write, Result};
+use std::task::Poll;
 
 use super::{Stream, RoleHelper};
 use super::detail::write_some;
@@ -14,7 +15,10 @@ impl<IO: Write, Role: RoleHelper> Write for Stream<IO, Role> {
     /// Frame head will be generated automatically,
     /// according to the length of the provided buffer.
     fn write(&mut self, buf: &[u8]) -> Result<usize> {
-        write_some(self, |io, iovec| io.write_vectored(iovec), buf)
+        match write_some(self, |io, iovec| io.write_vectored(iovec).into(), buf) {
+            Poll::Ready(x) => x,
+            Poll::Pending => unreachable!(),
+        }
     }
 
     /// The writer does not buffer any data, simply flush

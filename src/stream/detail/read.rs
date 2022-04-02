@@ -1,5 +1,5 @@
-use std::ops::Try;
-use std::convert::From;
+use std::io::Result;
+use std::task::{Poll, ready};
 
 use super::min_len;
 use super::super::{Stream, RoleHelper};
@@ -7,17 +7,15 @@ use super::super::state::{ReadState, HeadStore};
 
 use crate::frame::{FrameHead, Mask, OpCode};
 use crate::frame::mask::apply_mask4;
-use crate::error::{Error, FrameError};
+use crate::error::FrameError;
 
-pub fn read_some<F, T, E, IO, Role>(
+pub fn read_some<F, IO, Role>(
     mut stream: &mut Stream<IO, Role>,
     mut read: F,
     buf: &mut [u8],
-) -> T
+) -> Poll<Result<usize>>
 where
-    F: FnMut(&mut IO, &mut [u8]) -> T,
-    T: Try<Output = usize, Residual = E>,
-    E: From<Error>,
+    F: FnMut(&mut IO, &mut [u8]) -> Poll<Result<usize>>,
     Role: RoleHelper,
 {
     debug_assert!(buf.len() >= 14);
@@ -25,8 +23,8 @@ where
     loop {
         match stream.read_state {
             // always returns 0
-            ReadState::Eof => return T::from_output(0),
-            ReadState::Close => return T::from_output(0),
+            ReadState::Eof => return Poll::Ready(Ok(0)),
+            ReadState::Close => return Poll::Ready(Ok(0)),
             // read a new incoming frame
             ReadState::ReadHead(head_store) => {
                 let head_store_len = head_store.rd_left();
@@ -37,12 +35,12 @@ where
                     left.copy_from_slice(head_store.read());
                 }
 
-                let read_n = read(&mut stream.io, &mut buf[head_store_len..])?;
+                let read_n = ready!(read(&mut stream.io, &mut buf[head_store_len..]))?;
 
                 // EOF ?
                 if read_n == 0 {
                     stream.read_state = ReadState::Eof;
-                    return T::from_output(0);
+                    return Poll::Ready(Ok(0));
                 }
 
                 stream.read_state = ReadState::ProcessBuf {
@@ -54,11 +52,11 @@ where
             // continue to read data from the same frame
             ReadState::ReadData { next, mask } => {
                 let len = min_len(buf.len(), next);
-                let read_n = read(&mut stream.io, &mut buf[..len])?;
+                let read_n = ready!(read(&mut stream.io, &mut buf[..len]))?;
                 // EOF ?
                 if read_n == 0 {
                     stream.read_state = ReadState::Eof;
-                    return T::from_output(0);
+                    return Poll::Ready(Ok(0));
                 }
                 // unmask if server receives data from client
                 // this operation can be skipped if mask key is 0
@@ -74,7 +72,7 @@ where
                         mask,
                     };
                 }
-                return T::from_output(read_n);
+                return Poll::Ready(Ok(read_n));
             }
             // continue to read data from a ctrl frame
             ReadState::ReadPing { next, mask } => {
@@ -83,11 +81,11 @@ where
                     .ping_store
                     .write()
                     .split_at_mut(next as usize);
-                let read_n = read(&mut stream.io, buf)?;
+                let read_n = ready!(read(&mut stream.io, buf))?;
                 // EOF ?
                 if read_n == 0 {
                     stream.read_state = ReadState::Eof;
-                    return T::from_output(0);
+                    return Poll::Ready(Ok(0));
                 }
                 // unmask if server receives data from client
                 // this operation can be skipped if mask key is 0
@@ -107,7 +105,7 @@ where
                         mask,
                     };
                 }
-                return T::from_output(0);
+                return Poll::Ready(Ok(0));
             }
             // handle the read data in user provided buffer
             ReadState::ProcessBuf {
@@ -133,9 +131,9 @@ where
                             stream.read_state =
                                 ReadState::ReadHead(HeadStore::new_with_data(&buf[beg..end]));
                         }
-                        return T::from_output(processed);
+                        return Poll::Ready(Ok(processed));
                     }
-                    Err(e) => return T::from_residual(Error::from(e).into()),
+                    Err(e) => return Poll::Ready(Err(e.into())),
                 };
                 // point to payload
                 beg += parse_n;
@@ -149,7 +147,7 @@ where
                     // text is not allowed
                     // we never send a ping, so we ignore the pong
                     OpCode::Text | OpCode::Pong => {
-                        return T::from_residual(Error::from(FrameError::UnsupportedOpcode).into())
+                        return Poll::Ready(Err(FrameError::UnsupportedOpcode.into()));
                     }
                     // ignore fin flag
                     OpCode::Binary | OpCode::Continue => {
@@ -175,7 +173,7 @@ where
                                 next: frame_len - data_len as u64,
                                 mask,
                             };
-                            return T::from_output(processed);
+                            return Poll::Ready(Ok(processed));
                         }
                         // continue to process
                         stream.read_state = ReadState::ProcessBuf {
@@ -187,7 +185,7 @@ where
                     OpCode::Ping => {
                         // a ping frame must not have extened data
                         if frame_len > 125 {
-                            return T::from_residual(Error::from(FrameError::IllegalData).into());
+                            return Poll::Ready(Err(FrameError::IllegalData.into()));
                         }
                         if data_len != 0 {
                             // unmask payload data from client
@@ -214,7 +212,7 @@ where
                                 next: frame_len as u8 - data_len as u8,
                                 mask,
                             };
-                            return T::from_output(processed);
+                            return Poll::Ready(Ok(processed));
                         }
                         // continue to process
                         stream.heartbeat.is_complete = true;
@@ -226,7 +224,7 @@ where
                     }
                     OpCode::Close => {
                         stream.read_state = ReadState::Close;
-                        return T::from_output(processed);
+                        return Poll::Ready(Ok(processed));
                     }
                 }
             }

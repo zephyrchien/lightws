@@ -8,7 +8,6 @@ pub use frame::FrameError;
 pub use handshake::HandshakeError;
 
 use std::fmt::{Display, Formatter};
-use std::convert::Infallible;
 
 #[derive(Debug)]
 pub enum Error {
@@ -53,6 +52,10 @@ impl From<Error> for std::io::Error {
     }
 }
 
-impl From<Error> for Result<Infallible, std::io::Error> {
-    fn from(e: Error) -> Self { Err(e.into()) }
+impl From<FrameError> for std::io::Error {
+    fn from(e: FrameError) -> Self { Error::Frame(e).into() }
+}
+
+impl From<HandshakeError> for std::io::Error {
+    fn from(e: HandshakeError) -> Self { Error::Handshake(e).into() }
 }

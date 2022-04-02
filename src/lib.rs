@@ -2,8 +2,8 @@
 #![feature(const_slice_from_raw_parts)]
 #![feature(const_mut_refs)]
 #![feature(const_slice_index)]
-#![feature(try_trait_v2)]
 #![feature(read_buf)]
+#![feature(ready_macro)]
 
 //! Lightweight websocket implement for proxy tools.
 //!

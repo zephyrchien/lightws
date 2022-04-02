@@ -1,46 +1,43 @@
-use std::ops::Try;
+use std::io::Result;
+use std::task::{Poll, ready};
 
 use crate::handshake::Request;
 use crate::handshake::Response;
-use crate::error::{Error, HandshakeError};
+use crate::error::HandshakeError;
 
-pub fn send_response<F, T, E, IO, const N: usize>(
+pub fn send_response<F, IO, const N: usize>(
     io: &mut IO,
     buf: &mut [u8],
     response: &Response<N>,
     mut write: F,
-) -> T
+) -> Poll<Result<usize>>
 where
-    F: FnMut(&mut IO, &[u8]) -> T,
-    T: Try<Output = usize, Residual = E>,
-    E: From<Error>,
+    F: FnMut(&mut IO, &[u8]) -> Poll<Result<usize>>,
 {
     let total = match response.encode(buf) {
         Ok(n) => n,
-        Err(e) => return T::from_residual(Error::from(e).into()),
+        Err(e) => return Poll::Ready(Err(e.into())),
     };
 
     let mut offset = 0;
 
     while offset < total {
-        let n = write(io, &buf[offset..total])?;
+        let n = ready!(write(io, &buf[offset..total]))?;
 
         offset += n;
     }
 
-    T::from_output(total)
+    Poll::Ready(Ok(total))
 }
 
-pub fn recv_request<'h, 'b: 'h, F, T, E, IO, const N: usize>(
+pub fn recv_request<'h, 'b: 'h, F, IO, const N: usize>(
     io: &mut IO,
     buf: &'b mut [u8],
     request: &mut Request<'h, 'b, N>,
     mut read: F,
-) -> T
+) -> Poll<Result<usize>>
 where
-    F: FnMut(&mut IO, &mut [u8]) -> T,
-    T: Try<Output = usize, Residual = E>,
-    E: From<Error>,
+    F: FnMut(&mut IO, &mut [u8]) -> Poll<Result<usize>>,
 {
     let total = buf.len();
     let mut offset = 0;
@@ -50,22 +47,22 @@ where
     let buf_const: &'b [u8] = unsafe { &*(buf as *const [u8]) };
 
     while offset < total {
-        let n = read(io, &mut buf[offset..])?;
+        let n = ready!(read(io, &mut buf[offset..]))?;
 
         // EOF, no more data
         if n == 0 {
-            return T::from_residual(Error::from(HandshakeError::NotEnoughData).into());
+            return Poll::Ready(Err(HandshakeError::NotEnoughData.into()));
         }
 
         offset += n;
 
         match request.decode(&buf_const[..offset]) {
-            Ok(_) => return T::from_output(offset),
+            Ok(_) => return Poll::Ready(Ok(offset)),
             Err(ref e) if *e == HandshakeError::NotEnoughData => continue,
-            Err(e) => return T::from_residual(Error::from(e).into()),
+            Err(e) => return Poll::Ready(Err(e.into())),
         }
     }
 
     // provided buffer is filled, however it could not accommodate the response.
-    T::from_residual(Error::from(HandshakeError::NotEnoughCapacity).into())
+    Poll::Ready(Err(HandshakeError::NotEnoughCapacity.into()))
 }

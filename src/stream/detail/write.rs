@@ -1,5 +1,6 @@
-use std::ops::Try;
+use std::io::Result;
 use std::io::IoSlice;
+use std::task::{Poll, ready};
 
 use super::min_len;
 use super::super::{Stream, RoleHelper};
@@ -24,15 +25,18 @@ where
     store.set_wr_pos(n);
 }
 
-pub fn write_some<F, T, IO, Role>(mut stream: &mut Stream<IO, Role>, mut write: F, buf: &[u8]) -> T
+pub fn write_some<F, IO, Role>(
+    mut stream: &mut Stream<IO, Role>,
+    mut write: F,
+    buf: &[u8],
+) -> Poll<Result<usize>>
 where
-    F: FnMut(&mut IO, &[IoSlice]) -> T,
-    T: Try<Output = usize>,
+    F: FnMut(&mut IO, &[IoSlice]) -> Poll<Result<usize>>,
     Role: RoleHelper,
 {
     match stream.write_state {
         // always returns 0
-        WriteState::WriteZero => T::from_output(0),
+        WriteState::WriteZero => Poll::Ready(Ok(0)),
         // create a new frame
         WriteState::WriteHead(mut head_store) => {
             // data frame length depends on provided buffer length
@@ -43,20 +47,20 @@ where
             }
             // frame head(maybe partial) + payload
             let iovec = [IoSlice::new(head_store.read()), IoSlice::new(buf)];
-            let write_n = write(&mut stream.io, &iovec)?;
+            let write_n = ready!(write(&mut stream.io, &iovec))?;
             let head_len = head_store.rd_left() as usize;
 
             // write zero ?
             if write_n == 0 {
                 stream.write_state = WriteState::WriteZero;
-                return T::from_output(0);
+                return Poll::Ready(Ok(0));
             }
 
             // frame head is not written completely
             if write_n < head_len {
                 head_store.advance_rd_pos(write_n);
                 stream.write_state = WriteState::WriteHead(head_store);
-                return T::from_output(0);
+                return Poll::Ready(Ok(0));
             }
 
             // frame has been written completely
@@ -69,16 +73,16 @@ where
                 stream.write_state = WriteState::WriteData((frame_len - write_n) as u64);
             }
 
-            T::from_output(write_n)
+            Poll::Ready(Ok(write_n))
         }
         // continue to write to the same frame
         WriteState::WriteData(next) => {
             let len = min_len(buf.len(), next);
-            let write_n = write(&mut stream.io, &[IoSlice::new(&buf[..len])])?;
+            let write_n = ready!(write(&mut stream.io, &[IoSlice::new(&buf[..len])]))?;
             // write zero ?
             if write_n == 0 {
                 stream.write_state = WriteState::WriteZero;
-                return T::from_output(0);
+                return Poll::Ready(Ok(0));
             }
             // all data written ?
             if next == write_n as u64 {
@@ -86,7 +90,7 @@ where
             } else {
                 stream.write_state = WriteState::WriteData(next - write_n as u64)
             }
-            T::from_output(write_n)
+            Poll::Ready(Ok(write_n))
         }
     }
 }
