@@ -61,7 +61,7 @@ where
                 // unmask if server receives data from client
                 // this operation can be skipped if mask key is 0
                 if let Mask::Key(key) = mask {
-                    apply_mask4(key, &mut buf[..len])
+                    apply_mask4(key, &mut buf[..read_n])
                 };
                 // read complete ?
                 if next == read_n as u64 {
