@@ -29,9 +29,9 @@ impl<IO: AsyncRead + AsyncWrite + Unpin, Role: ServerRole> Endpoint<IO, Role> {
     }
 
     /// Async version of [`recv_request`](Self::recv_request).
-    /// 
+    ///
     /// # Safety
-    /// 
+    ///
     /// Caller must not modify the buffer while `request` is in use,
     /// otherwise it is undefined behavior!
     pub async unsafe fn recv_request_async<'h, 'b: 'h, const N: usize>(

@@ -33,9 +33,9 @@ impl<IO: Read + Write, Role: ClientRole> Endpoint<IO, Role> {
     /// as [`Response`].
     /// This function will block on reading data, until there is enough
     /// data to parse a response or an error occurs.
-    /// 
+    ///
     /// # Safety
-    /// 
+    ///
     /// Caller must not modify the buffer while `response` is in use,
     /// otherwise it is undefined behavior!
     pub unsafe fn recv_response<'h, 'b: 'h, const N: usize>(
@@ -53,12 +53,7 @@ impl<IO: Read + Write, Role: ClientRole> Endpoint<IO, Role> {
     /// This function is a combination of [`send_request`](Self::send_request)
     /// and [`recv_response`](Self::recv_response), without accessing [`Response`].
     /// it will block until the handshake completes, or an error occurs.
-    pub fn connect(
-        mut io: IO,
-        buf: &mut [u8],
-        host: &str,
-        path: &str,
-    ) -> Result<Stream<IO, Role>> {
+    pub fn connect(mut io: IO, buf: &mut [u8], host: &str, path: &str) -> Result<Stream<IO, Role>> {
         let sec_key = new_sec_key();
         let sec_accept = derive_accept_key(&sec_key);
 
@@ -104,8 +99,7 @@ mod test {
 
             let mut buf = vec![0u8; 1024];
 
-            let send_n =
-                Endpoint::<_, Client>::send_request(&mut rw, &mut buf, &request).unwrap();
+            let send_n = Endpoint::<_, Client>::send_request(&mut rw, &mut buf, &request).unwrap();
 
             assert_eq!(send_n, REQUEST.len());
             assert_eq!(&buf[..send_n], REQUEST);
@@ -131,10 +125,9 @@ mod test {
             let mut headers = HttpHeader::new_storage();
             let mut response = Response::new_storage(&mut headers);
 
-            let recv_n = unsafe {
-                Endpoint::<_, Client>::recv_response(&mut rw, &mut buf, &mut response)
-            }
-            .unwrap();
+            let recv_n =
+                unsafe { Endpoint::<_, Client>::recv_response(&mut rw, &mut buf, &mut response) }
+                    .unwrap();
 
             assert_eq!(recv_n, RESPONSE.len());
             assert_eq!(response.sec_accept, b"s3pPLMBiTxaQ9kYGzzhZRbK+xOo=");

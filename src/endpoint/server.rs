@@ -33,9 +33,9 @@ impl<IO: Read + Write, Role: ServerRole> Endpoint<IO, Role> {
     /// as [`Request`].
     /// This function will block on reading data, until there is enough
     /// data to parse a request or an error occurs.
-    /// 
+    ///
     /// # Safety
-    /// 
+    ///
     /// Caller must not modify the buffer while `request` is in use,
     /// otherwise it is undefined behavior!
     pub unsafe fn recv_request<'h, 'b: 'h, const N: usize>(
@@ -53,12 +53,7 @@ impl<IO: Read + Write, Role: ServerRole> Endpoint<IO, Role> {
     /// This function is a combination of [`recv_request`](Self::recv_request)
     /// and [`send_response`](Self::send_response), without accessing [`Request`].
     /// it will block until the handshake completes, or an error occurs.    
-    pub fn accept(
-        mut io: IO,
-        buf: &mut [u8],
-        host: &str,
-        path: &str,
-    ) -> Result<Stream<IO, Role>> {
+    pub fn accept(mut io: IO, buf: &mut [u8], host: &str, path: &str) -> Result<Stream<IO, Role>> {
         // recv
         let mut other_headers = HttpHeader::new_storage();
         let mut request = Request::new_storage(&mut other_headers);
@@ -131,10 +126,9 @@ mod test {
             let mut headers = HttpHeader::new_storage();
             let mut request = Request::new_storage(&mut headers);
 
-            let recv_n = unsafe {
-                Endpoint::<_, Server>::recv_request(&mut rw, &mut buf, &mut request)
-            }
-            .unwrap();
+            let recv_n =
+                unsafe { Endpoint::<_, Server>::recv_request(&mut rw, &mut buf, &mut request) }
+                    .unwrap();
 
             assert_eq!(recv_n, REQUEST.len());
             assert_eq!(request.host, b"www.example.com");
