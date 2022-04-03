@@ -27,6 +27,6 @@ where
                 .map_ok(|_| buf.filled().len())
             },
             buf.initialize_unfilled(),
-        ).map_ok(|_| ())
+        ).map_ok(|n| buf.advance(n))
     }
 }
