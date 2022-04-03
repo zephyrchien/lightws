@@ -16,7 +16,7 @@ impl<IO: Read + Write, Role: ClientRole> Endpoint<IO, Role> {
     /// Request data are encoded to the provided buffer.
     /// This function will block until all data
     /// are written to IO source or an error occurs.
-    pub fn send_request_sync<const N: usize>(
+    pub fn send_request<const N: usize>(
         io: &mut IO,
         buf: &mut [u8],
         request: &Request<'_, '_, N>,
@@ -38,7 +38,7 @@ impl<IO: Read + Write, Role: ClientRole> Endpoint<IO, Role> {
     /// 
     /// Caller must not modify the buffer while `response` is in use,
     /// otherwise it is undefined behavior!
-    pub unsafe fn recv_response_sync<'h, 'b: 'h, const N: usize>(
+    pub unsafe fn recv_response<'h, 'b: 'h, const N: usize>(
         io: &mut IO,
         buf: &mut [u8],
         response: &mut Response<'h, 'b, N>,
@@ -50,10 +50,10 @@ impl<IO: Read + Write, Role: ClientRole> Endpoint<IO, Role> {
     }
 
     /// Perform a simple websocket client handshake, return a new websocket stream.
-    /// This function is a combination of [`send_request`](Self::send_request_sync)
-    /// and [`recv_response`](Self::recv_response_sync), without accessing [`Response`].
+    /// This function is a combination of [`send_request`](Self::send_request)
+    /// and [`recv_response`](Self::recv_response), without accessing [`Response`].
     /// it will block until the handshake completes, or an error occurs.
-    pub fn connect_sync(
+    pub fn connect(
         mut io: IO,
         buf: &mut [u8],
         host: &str,
@@ -64,13 +64,13 @@ impl<IO: Read + Write, Role: ClientRole> Endpoint<IO, Role> {
 
         // send
         let request = Request::new(path.as_bytes(), host.as_bytes(), &sec_key);
-        let _ = Self::send_request_sync(&mut io, buf, &request)?;
+        let _ = Self::send_request(&mut io, buf, &request)?;
 
         // recv
         let mut other_headers = HttpHeader::new_storage();
         let mut response = Response::new_storage(&mut other_headers);
         // this is safe since we do not modify response.
-        let _ = unsafe { Self::recv_response_sync(&mut io, buf, &mut response) }?;
+        let _ = unsafe { Self::recv_response(&mut io, buf, &mut response) }?;
 
         // check
         if response.sec_accept != sec_accept {
@@ -105,7 +105,7 @@ mod test {
             let mut buf = vec![0u8; 1024];
 
             let send_n =
-                Endpoint::<_, Client>::send_request_sync(&mut rw, &mut buf, &request).unwrap();
+                Endpoint::<_, Client>::send_request(&mut rw, &mut buf, &request).unwrap();
 
             assert_eq!(send_n, REQUEST.len());
             assert_eq!(&buf[..send_n], REQUEST);
@@ -132,7 +132,7 @@ mod test {
             let mut response = Response::new_storage(&mut headers);
 
             let recv_n = unsafe {
-                Endpoint::<_, Client>::recv_response_sync(&mut rw, &mut buf, &mut response)
+                Endpoint::<_, Client>::recv_response(&mut rw, &mut buf, &mut response)
             }
             .unwrap();
 
@@ -162,7 +162,7 @@ mod test {
 
         // sec-websocket-accept mismatch
         // since connect uses a random key
-        let stream = Endpoint::<_, Client>::connect_sync(&mut rw, &mut buf, "example.com", "/");
+        let stream = Endpoint::<_, Client>::connect(&mut rw, &mut buf, "example.com", "/");
         if let Err(e) = stream {
             let e = e.source().unwrap();
             let e: &HandshakeError = e.downcast_ref().unwrap();

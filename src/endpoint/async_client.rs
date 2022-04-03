@@ -14,8 +14,8 @@ use crate::error::HandshakeError;
 use crate::stream::Stream;
 
 impl<IO: AsyncRead + AsyncWrite + Unpin, Role: ClientRole> Endpoint<IO, Role> {
-    /// Async version of [`send_request`](Self::send_request_sync).
-    pub async fn send_request<'h, 'b: 'h, const N: usize>(
+    /// Async version of [`send_request`](Self::send_request).
+    pub async fn send_request_async<'h, 'b: 'h, const N: usize>(
         io: &mut IO,
         buf: &mut [u8],
         request: &Request<'h, 'b, N>,
@@ -26,13 +26,13 @@ impl<IO: AsyncRead + AsyncWrite + Unpin, Role: ClientRole> Endpoint<IO, Role> {
         .await
     }
 
-    /// Async version of [`recv_response`](Self::recv_response_sync).
+    /// Async version of [`recv_response`](Self::recv_response).
     /// 
     /// # Safety
     /// 
     /// Caller must not modify the buffer while `response` is in use,
     /// otherwise it is undefined behavior!
-    pub async unsafe fn recv_response<'h, 'b: 'h, const N: usize>(
+    pub async unsafe fn recv_response_async<'h, 'b: 'h, const N: usize>(
         io: &mut IO,
         buf: &mut [u8],
         response: &mut Response<'h, 'b, N>,
@@ -48,8 +48,8 @@ impl<IO: AsyncRead + AsyncWrite + Unpin, Role: ClientRole> Endpoint<IO, Role> {
         .await
     }
 
-    /// Async version of [`connect`](Self::connect_sync).
-    pub async fn connect(
+    /// Async version of [`connect`](Self::connect).
+    pub async fn connect_async(
         mut io: IO,
         buf: &mut [u8],
         host: &str,
@@ -60,13 +60,13 @@ impl<IO: AsyncRead + AsyncWrite + Unpin, Role: ClientRole> Endpoint<IO, Role> {
 
         // send
         let request = Request::new(path.as_bytes(), host.as_bytes(), &sec_key);
-        let _ = Self::send_request(&mut io, buf, &request).await?;
+        let _ = Self::send_request_async(&mut io, buf, &request).await?;
 
         // recv
         let mut other_headers = HttpHeader::new_storage();
         let mut response = Response::new_storage(&mut other_headers);
         // this is safe since we do not modify response.
-        let _ = unsafe { Self::recv_response(&mut io, buf, &mut response) }.await?;
+        let _ = unsafe { Self::recv_response_async(&mut io, buf, &mut response) }.await?;
 
         // check
         if response.sec_accept != sec_accept {

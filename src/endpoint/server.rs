@@ -16,7 +16,7 @@ impl<IO: Read + Write, Role: ServerRole> Endpoint<IO, Role> {
     /// Response data are encoded to the provided buffer.
     /// This function will block until all data
     /// are written to IO source or an error occurs.
-    pub fn send_response_sync<const N: usize>(
+    pub fn send_response<const N: usize>(
         io: &mut IO,
         buf: &mut [u8],
         response: &Response<'_, '_, N>,
@@ -38,7 +38,7 @@ impl<IO: Read + Write, Role: ServerRole> Endpoint<IO, Role> {
     /// 
     /// Caller must not modify the buffer while `request` is in use,
     /// otherwise it is undefined behavior!
-    pub unsafe fn recv_request_sync<'h, 'b: 'h, const N: usize>(
+    pub unsafe fn recv_request<'h, 'b: 'h, const N: usize>(
         io: &mut IO,
         buf: &mut [u8],
         request: &mut Request<'h, 'b, N>,
@@ -50,10 +50,10 @@ impl<IO: Read + Write, Role: ServerRole> Endpoint<IO, Role> {
     }
 
     /// Perform a simple websocket server handshake, return a new websocket stream.
-    /// This function is a combination of [`recv_request`](Self::recv_request_sync)
-    /// and [`send_response`](Self::send_response_sync), without accessing [`Request`].
+    /// This function is a combination of [`recv_request`](Self::recv_request)
+    /// and [`send_response`](Self::send_response), without accessing [`Request`].
     /// it will block until the handshake completes, or an error occurs.    
-    pub fn accept_sync(
+    pub fn accept(
         mut io: IO,
         buf: &mut [u8],
         host: &str,
@@ -63,7 +63,7 @@ impl<IO: Read + Write, Role: ServerRole> Endpoint<IO, Role> {
         let mut other_headers = HttpHeader::new_storage();
         let mut request = Request::new_storage(&mut other_headers);
         // this is safe since we do not modify request.
-        let _ = unsafe { Self::recv_request_sync(&mut io, buf, &mut request) }?;
+        let _ = unsafe { Self::recv_request(&mut io, buf, &mut request) }?;
 
         // check
         if request.host != host.as_bytes() {
@@ -77,7 +77,7 @@ impl<IO: Read + Write, Role: ServerRole> Endpoint<IO, Role> {
         // send
         let sec_accept = derive_accept_key(request.sec_key);
         let response = Response::new(&sec_accept);
-        let _ = Self::send_response_sync(&mut io, buf, &response)?;
+        let _ = Self::send_response(&mut io, buf, &response)?;
 
         Ok(Stream::new(io))
     }
@@ -105,7 +105,7 @@ mod test {
             let mut buf = vec![0u8; 1024];
 
             let send_n =
-                Endpoint::<_, Server>::send_response_sync(&mut rw, &mut buf, &response).unwrap();
+                Endpoint::<_, Server>::send_response(&mut rw, &mut buf, &response).unwrap();
 
             assert_eq!(send_n, RESPONSE.len());
             assert_eq!(&buf[..send_n], RESPONSE);
@@ -132,7 +132,7 @@ mod test {
             let mut request = Request::new_storage(&mut headers);
 
             let recv_n = unsafe {
-                Endpoint::<_, Server>::recv_request_sync(&mut rw, &mut buf, &mut request)
+                Endpoint::<_, Server>::recv_request(&mut rw, &mut buf, &mut request)
             }
             .unwrap();
 
@@ -162,6 +162,6 @@ mod test {
 
         let mut buf = vec![0u8; 1024];
 
-        let _ = Endpoint::<_, Server>::accept_sync(&mut rw, &mut buf, "www.example.com", "/ws");
+        let _ = Endpoint::<_, Server>::accept(&mut rw, &mut buf, "www.example.com", "/ws");
     }
 }

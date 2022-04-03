@@ -33,13 +33,13 @@ fn sync_bidi_copy() {
         let (tcp, _) = lis1.accept().unwrap();
         debug!("relay: tcp accepted!");
         let mut ws_local_read =
-            Endpoint::<_, Server>::accept_sync(tcp, &mut buf, HOST, PATH).unwrap();
+            Endpoint::<_, Server>::accept(tcp, &mut buf, HOST, PATH).unwrap();
         debug!("relay: websocket accepted!");
 
         let tcp = TcpStream::connect(ADDR2).unwrap();
         debug!("relay: tcp connected!");
         let mut ws_remote_read =
-            Endpoint::<_, Client>::connect_sync(tcp, &mut buf, HOST, PATH).unwrap();
+            Endpoint::<_, Client>::connect(tcp, &mut buf, HOST, PATH).unwrap();
         debug!("relay: websocket connected!");
 
         let mut ws_local_write = ws_local_read.try_clone().unwrap();
@@ -67,7 +67,7 @@ fn sync_bidi_copy() {
         let mut buf = vec![0u8; 1024];
         let (tcp, _) = lis2.accept().unwrap();
         debug!("server: tcp accepted!");
-        let mut ws = Endpoint::<_, Server>::accept_sync(tcp, &mut buf, HOST, PATH).unwrap();
+        let mut ws = Endpoint::<_, Server>::accept(tcp, &mut buf, HOST, PATH).unwrap();
         debug!("server: websocket accepted!");
 
         loop {
@@ -87,7 +87,7 @@ fn sync_bidi_copy() {
         thread::sleep(Duration::from_millis(500));
         let tcp = TcpStream::connect(ADDR1).unwrap();
         debug!("client: tcp connected!");
-        let mut ws = Endpoint::<_, Client>::connect_sync(tcp, &mut buf, HOST, PATH).unwrap();
+        let mut ws = Endpoint::<_, Client>::connect(tcp, &mut buf, HOST, PATH).unwrap();
         debug!("client: websocket connected!");
 
         debug!("client: sleep 500ms..");

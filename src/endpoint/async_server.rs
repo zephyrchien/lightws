@@ -14,8 +14,8 @@ use crate::error::HandshakeError;
 use crate::stream::Stream;
 
 impl<IO: AsyncRead + AsyncWrite + Unpin, Role: ServerRole> Endpoint<IO, Role> {
-    /// Async version of [`send_response`](Self::send_response_sync).
-    pub async fn send_response<const N: usize>(
+    /// Async version of [`send_response`](Self::send_response).
+    pub async fn send_response_async<const N: usize>(
         io: &mut IO,
         buf: &mut [u8],
         response: &Response<'_, '_, N>,
@@ -28,13 +28,13 @@ impl<IO: AsyncRead + AsyncWrite + Unpin, Role: ServerRole> Endpoint<IO, Role> {
         .await
     }
 
-    /// Async version of [`recv_request`](Self::recv_request_sync).
+    /// Async version of [`recv_request`](Self::recv_request).
     /// 
     /// # Safety
     /// 
     /// Caller must not modify the buffer while `request` is in use,
     /// otherwise it is undefined behavior!
-    pub async unsafe fn recv_request<'h, 'b: 'h, const N: usize>(
+    pub async unsafe fn recv_request_async<'h, 'b: 'h, const N: usize>(
         io: &mut IO,
         buf: &mut [u8],
         request: &mut Request<'h, 'b, N>,
@@ -50,8 +50,8 @@ impl<IO: AsyncRead + AsyncWrite + Unpin, Role: ServerRole> Endpoint<IO, Role> {
         .await
     }
 
-    /// Async version of [`accept`](Self::accept_sync).
-    pub async fn accept(
+    /// Async version of [`accept`](Self::accept).
+    pub async fn accept_async(
         mut io: IO,
         buf: &mut [u8],
         host: &str,
@@ -61,7 +61,7 @@ impl<IO: AsyncRead + AsyncWrite + Unpin, Role: ServerRole> Endpoint<IO, Role> {
         let mut other_headers = HttpHeader::new_storage();
         let mut request = Request::new_storage(&mut other_headers);
         // this is safe since we do not modify request.
-        let _ = unsafe { Self::recv_request(&mut io, buf, &mut request) }.await?;
+        let _ = unsafe { Self::recv_request_async(&mut io, buf, &mut request) }.await?;
 
         // check
         if request.host != host.as_bytes() {
@@ -75,7 +75,7 @@ impl<IO: AsyncRead + AsyncWrite + Unpin, Role: ServerRole> Endpoint<IO, Role> {
         // send
         let sec_accept = derive_accept_key(request.sec_key);
         let response = Response::new(&sec_accept);
-        let _ = Self::send_response(&mut io, buf, &response).await?;
+        let _ = Self::send_response_async(&mut io, buf, &response).await?;
 
         Ok(Stream::new(io))
     }
