@@ -3,6 +3,7 @@
 ![Lightws](https://github.com/zephyrchien/lightws/workflows/ci/badge.svg)
 ![Lightws](https://github.com/zephyrchien/lightws/workflows/build/badge.svg)
 [![Released API docs](https://docs.rs/lightws/badge.svg)](https://docs.rs/lightws)
+[![crates.io](https://img.shields.io/crates/v/lightws.svg)](https://crates.io/crates/lightws)
 
 Lightweight websocket implement for stream transmission.
 
