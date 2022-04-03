@@ -51,28 +51,34 @@ where
             }
             // continue to read data from the same frame
             ReadState::ReadData { next, mask } => {
-                let len = min_len(buf.len(), next);
-                let read_n = ready!(read(&mut stream.io, &mut buf[..len]))?;
+                let read_n = ready!(read(&mut stream.io, buf))?;
                 // EOF ?
                 if read_n == 0 {
                     stream.read_state = ReadState::Eof;
                     return Poll::Ready(Ok(0));
                 }
+                let len = min_len(read_n, next);
                 // unmask if server receives data from client
                 // this operation can be skipped if mask key is 0
                 if let Mask::Key(key) = mask {
-                    apply_mask4(key, &mut buf[..read_n])
+                    apply_mask4(key, &mut buf[..len])
                 };
                 // read complete ?
-                if next == read_n as u64 {
-                    stream.read_state = ReadState::new();
-                } else {
+                if next > read_n as u64 {
+                    // need to read more
                     stream.read_state = ReadState::ReadData {
                         next: next - read_n as u64,
                         mask,
                     };
+                    return Poll::Ready(Ok(read_n));
+                } else {
+                    // continue to process
+                    stream.read_state = ReadState::ProcessBuf {
+                        beg: len,
+                        end: read_n,
+                        processed: len,
+                    }
                 }
-                return Poll::Ready(Ok(read_n));
             }
             // continue to read data from a ctrl frame
             ReadState::ReadPing { next, mask } => {
