@@ -16,8 +16,13 @@
 //! }
 //! ```
 //!
-//! One `Read` or `Write` leads to **at most One**
-//! operation(or syscall) on the underlying IO source.
+//! A new established [`Stream`] is in [`Direct`] (default) mode, where
+//! a `Wead` or `Rrite` leads to **at most one** syscall, and
+//! an `Ok(0)` will be returned if frame head is not completely read or written.
+//! It can be converted to [`Guarded`] mode, which wraps `Read` or `Write` in a loop,
+//! where `Ok(0)` is handled internally.
+//! (This only works for `Async IO`. `Sync IO` is not wrapped!)
+//!
 //! Stream itself does not buffer any payload data during
 //! a `Read` or `Write`, so there is no extra heap allocation.
 
@@ -39,6 +44,12 @@ use std::marker::PhantomData;
 use state::{ReadState, WriteState, HeartBeat};
 use crate::role::RoleHelper;
 
+/// Direct read or write.
+pub struct Direct {}
+
+/// Wrapped read or write.
+pub struct Guarded {}
+
 /// Websocket stream.
 ///
 /// Depending on `IO`, [`Stream`] implements [`std::io::Read`] and [`std::io::Write`]
@@ -48,25 +59,26 @@ use crate::role::RoleHelper;
 /// It is reserved to provide extra infomation to apply optimizations.
 ///
 /// See also: `Stream::read`, `Stream::write`.
-pub struct Stream<IO, Role> {
+pub struct Stream<IO, Role, Guard = Direct> {
     io: IO,
     read_state: ReadState,
     write_state: WriteState,
     heartbeat: HeartBeat,
     _marker: PhantomData<Role>,
+    __marker: PhantomData<Guard>,
 }
 
-impl<IO, Role> AsRef<IO> for Stream<IO, Role> {
+impl<IO, Role, Guard> AsRef<IO> for Stream<IO, Role, Guard> {
     #[inline]
     fn as_ref(&self) -> &IO { &self.io }
 }
 
-impl<IO, Role> AsMut<IO> for Stream<IO, Role> {
+impl<IO, Role, Guard> AsMut<IO> for Stream<IO, Role, Guard> {
     #[inline]
     fn as_mut(&mut self) -> &mut IO { &mut self.io }
 }
 
-impl<IO, Role> std::fmt::Debug for Stream<IO, Role> {
+impl<IO, Role, Guard> std::fmt::Debug for Stream<IO, Role, Guard> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("Stream")
             .field("read_state", &self.read_state)
@@ -87,6 +99,20 @@ impl<IO, Role> Stream<IO, Role> {
             write_state: WriteState::new(),
             heartbeat: HeartBeat::new(),
             _marker: PhantomData,
+            __marker: PhantomData,
+        }
+    }
+
+    /// Convert to a guarded stream.
+    #[inline]
+    pub fn guard(self) -> Stream<IO, Role, Guarded> {
+        Stream {
+            io: self.io,
+            read_state: self.read_state,
+            write_state: self.write_state,
+            heartbeat: self.heartbeat,
+            _marker: PhantomData,
+            __marker: PhantomData,
         }
     }
 }

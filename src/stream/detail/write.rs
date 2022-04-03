@@ -25,8 +25,8 @@ where
     store.set_wr_pos(n);
 }
 
-pub fn write_some<F, IO, Role>(
-    mut stream: &mut Stream<IO, Role>,
+pub fn write_some<F, IO, Role, Guard>(
+    mut stream: &mut Stream<IO, Role, Guard>,
     mut write: F,
     buf: &[u8],
 ) -> Poll<Result<usize>>

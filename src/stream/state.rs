@@ -66,7 +66,7 @@ impl WriteState {
 }
 
 /// Check status.
-impl<IO, Role> Stream<IO, Role> {
+impl<IO, Role, Guard> Stream<IO, Role, Guard> {
     /// Check if a `Ping` frame is received.
     #[inline]
     pub const fn is_pinged(&self) -> bool { !self.heartbeat.ping_store.is_empty() }

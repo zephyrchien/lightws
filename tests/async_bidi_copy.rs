@@ -34,14 +34,16 @@ async fn async_bidi_copy() {
         debug!("relay: tcp accepted!");
         let ws_local = Endpoint::<_, Server>::accept_async(tcp, &mut buf, HOST, PATH)
             .await
-            .unwrap();
+            .unwrap()
+            .guard();
         debug!("relay: websocket accepted!");
 
         let tcp = TcpStream::connect(ADDR2).await.unwrap();
         debug!("relay: tcp connected!");
         let ws_remote = Endpoint::<_, Client>::connect_async(tcp, &mut buf, HOST, PATH)
             .await
-            .unwrap();
+            .unwrap()
+            .guard();
         debug!("relay: websocket connected!");
 
         // or use tokio::io::bidirectional_copy ~
