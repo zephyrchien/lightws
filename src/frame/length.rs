@@ -38,6 +38,7 @@ impl PayloadLen {
     }
 
     /// Read the flag which indicates the kind of length.
+    ///
     /// If extended length is used, the caller should read the next 2 or 8 bytes
     /// to get the real length.
     #[inline]

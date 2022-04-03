@@ -57,8 +57,9 @@ impl FrameHead {
         }
     }
 
-    /// Encode to provided buffer, returns the count of written bytes.
-    /// The caller should ensure the buffer is large enough,
+    /// Encode to provided buffer, return the count of written bytes.
+    ///
+    /// Caller should ensure there is enough space to write,
     /// otherwise a [`FrameError::NotEnoughCapacity`] error will be returned.
     pub fn encode(&self, buf: &mut [u8]) -> Result<usize, FrameError> {
         if buf.len() < 2 {
@@ -108,8 +109,8 @@ impl FrameHead {
     ///
     /// # Safety
     ///
-    /// Caller must ensure buffer is large enough. It is **Undefined Behavior** if the
-    /// buffer is not large enough.
+    /// Caller must ensure there is enough space to write,
+    /// otherwise it is **Undefined Behavior!**
     pub unsafe fn encode_unchecked(&self, buf: &mut [u8]) -> usize {
         let mut writer = Writer::new(buf);
 
@@ -144,8 +145,8 @@ impl FrameHead {
         writer.pos()
     }
 
-    /// Parse from provided buffer, returns [`FrameHead`] and the count of read bytes
-    /// if the parse succeeds.
+    /// Parse from provided buffer, returns [`FrameHead`] and the count of read bytes.
+    ///
     /// If there is not enough data to parse, a [`FrameError::NotEnoughData`] error
     /// will be returned.
     pub fn decode(buf: &[u8]) -> Result<(Self, usize), FrameError> {

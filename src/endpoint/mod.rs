@@ -1,4 +1,14 @@
 //! Websocket endpoint.
+//!
+//! [`Endpoint`] is used to perform a handshake. It is compatible with
+//! both sync and async IO.
+//!
+//! To open or accept a connection directly, use [`Endpoint::connect`],
+//! [`Endpoint::accept`], or their async version.
+//!
+//! To have detailed control over a handshake, use [`Endpoint::send_request`],
+//! [`Endpoint::recv_response`], [`Endpoint::recv_request`], [`Endpoint::send_response`],
+//! or their async version.
 
 mod detail;
 mod client;
@@ -13,7 +23,7 @@ cfg_if::cfg_if! {
 
 use std::marker::PhantomData;
 
-/// Client or server endpoint.
+/// Handshake endpoint.
 pub struct Endpoint<IO, Role> {
     _marker: PhantomData<IO>,
     __marker: PhantomData<Role>,

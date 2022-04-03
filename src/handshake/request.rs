@@ -46,8 +46,8 @@ impl<'h, 'b: 'h, const N: usize> HeaderHelper for Request<'h, 'b, N> {
 }
 
 impl<'h, 'b: 'h> Request<'h, 'b> {
-    /// Create a new request without extra headers. This is usually used to send
-    /// a request.
+    /// Create a new request without extra headers.
+    /// This is usually used to send a request.
     #[inline]
     pub const fn new(path: &'b [u8], host: &'b [u8], sec_key: &'b [u8]) -> Self {
         Self {
@@ -58,8 +58,8 @@ impl<'h, 'b: 'h> Request<'h, 'b> {
         }
     }
 
-    /// Create a new request with extra headers. This is usually used to send
-    /// a request.
+    /// Create a new request with extra headers.
+    /// This is usually used to send a request.
     #[inline]
     pub const fn new_with_headers(
         path: &'b [u8],
@@ -76,8 +76,9 @@ impl<'h, 'b: 'h> Request<'h, 'b> {
     }
 
     /// Create with user provided headers storage, other fields are left empty.
-    /// The max decode header size is [`MAX_ALLOW_HEADERS`].
     /// This is usually used to receive a request.
+    ///
+    /// The max decode header size is [`MAX_ALLOW_HEADERS`].
     #[inline]
     pub const fn new_storage(other_headers: &'h mut [HttpHeader<'b>]) -> Self {
         Self {
@@ -91,8 +92,9 @@ impl<'h, 'b: 'h> Request<'h, 'b> {
 
 impl<'h, 'b: 'h, const N: usize> Request<'h, 'b, N> {
     /// Create with user provided headers storage, other fields are left empty.
-    /// The const generic paramater represents the max decode header size.
     /// This is usually used to receive a request.
+    ///
+    /// The const generic paramater represents the max decode header size.
     #[inline]
     pub const fn new_custom_storage(other_headers: &'h mut [HttpHeader<'b>]) -> Self {
         Self {
@@ -109,7 +111,7 @@ impl<'h, 'b: 'h, const N: usize> Request<'h, 'b, N> {
     /// `sec-websocket-key` and `sec-websocket-version` are written to
     /// the buffer, then other headers(if any) are written in order.
     ///
-    /// Caller should make sure the buffer is large enough,
+    /// Caller should make sure there is enough space to write,
     /// otherwise a [`HandshakeError::NotEnoughCapacity`] error will be returned.
     pub fn encode(&self, buf: &mut [u8]) -> Result<usize, HandshakeError> {
         debug_assert!(buf.len() > 80);

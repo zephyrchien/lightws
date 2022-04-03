@@ -14,6 +14,8 @@ impl<IO: Write, Role: RoleHelper> Write for Stream<IO, Role> {
     ///
     /// Frame head will be generated automatically,
     /// according to the length of the provided buffer.
+    ///
+    /// A standard client should mask payload data before sending it.
     fn write(&mut self, buf: &[u8]) -> Result<usize> {
         match write_some(self, |io, iovec| io.write_vectored(iovec).into(), buf) {
             Poll::Ready(x) => x,

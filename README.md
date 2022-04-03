@@ -18,14 +18,29 @@ Lightweight websocket implement for stream transmission.
 
 [role, endpoint, stream]
 
+Std:
+
 ```rust
 {
     // handshake
     let stream = Endpoint<TcpStream, Client>::connect(tcp, buf, host, path)?;
     // read some data
-    stream.read(&mut buf);
+    stream.read(&mut buf)?;
     // write some data
-    stream.write(&buf);
+    stream.write(&buf)?;
+}
+```
+
+Async:
+
+```rust
+{
+    // handshake
+    let stream = Endpoint<TcpStream, Client>::connect_async(tcp, buf, host, path).await?;
+    // read some data
+    stream.read(&mut buf).await?;
+    // write some data
+    stream.write(&buf).await?;
 }
 ```
 
@@ -41,7 +56,7 @@ Frame:
     let head = FrameHead::new(...);
     let offset = unsafe {
         head.encode_unchecked(&mut buf);
-    }
+    };
 
     // decode a frame head
     let (head, offset) = FrameHead::decode(&buf).unwrap();
@@ -53,13 +68,12 @@ Handshake:
 ```rust
 {
     // make a client handshake request
-    let mut custom_headers = HttpHeader::new_storage();
-    let request = Request::new(&mut custom_headers);
+    let request = Request::new(b"/ws", b"example.com", "sec-key..");
     let offset = request.encode(&mut buf).unwrap();
 
     // parse a server handshake response
     let mut custom_headers = HttpHeader::new_storage();
-    let mut response = Response::new(&mut custom_headers);
+    let mut response = Response::new_storage(&mut custom_headers);
     let offset = response.decode(&buf).unwrap();
 }
 ```

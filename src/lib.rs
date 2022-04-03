@@ -9,6 +9,7 @@
 //! Lightweight websocket implement for proxy tools.
 //!
 //! ## Features
+//!
 //! - Avoid heap allocation.
 //! - Avoid buffering frame payload.
 //! - Use vectored-io if available.
@@ -20,14 +21,45 @@
 //! - [`endpoint`]
 //! - [`stream`]
 //!
-//! ```ignore
-//! {
-//!     // handshake
-//!     let stream = Endpoint<TcpStream, Client>::connect(tcp, buf, host, path)?;
+//! Std:
+//!
+//! ```no_run
+//! use std::io::{Read, Write};
+//! use std::net::TcpStream;
+//! use lightws::role::Client;
+//! use lightws::endpoint::Endpoint;
+//! fn run_sync() -> std::io::Result<()> {  
+//!     let mut buf = [0u8; 256];
+//!     // establish tcp connection
+//!     let mut tcp = TcpStream::connect("example.com:80")?;
+//!     // establish ws connection
+//!     let mut ws = Endpoint::<TcpStream, Client>::connect(tcp, &mut buf, "example.com", "/ws")?;
 //!     // read some data
-//!     stream.read(&mut buf);
+//!     let n = ws.read(&mut buf)?;
 //!     // write some data
-//!     stream.write(&buf);
+//!     let n = ws.write(&mut buf)?;
+//!     Ok(())
+//! }
+//! ```
+//!
+//! Tokio:
+//!
+//! ```no_run
+//! use tokio::net::TcpStream;
+//! use tokio::io::{AsyncReadExt, AsyncWriteExt};
+//! use lightws::role::Client;
+//! use lightws::endpoint::Endpoint;
+//! async fn run_async() -> std::io::Result<()> {
+//!     let mut buf = [0u8; 256];
+//!     // establish tcp connection
+//!     let mut tcp = TcpStream::connect("example.com:80").await?;
+//!     // establish ws connection
+//!     let mut ws = Endpoint::<TcpStream, Client>::connect_async(tcp, &mut buf, "example.com", "/ws").await?;
+//!     // read some data
+//!     let n = ws.read(&mut buf).await?;
+//!     // write some data
+//!     let n = ws.write(&mut buf).await?;
+//!     Ok(())
 //! }
 //! ```
 //!
@@ -38,31 +70,37 @@
 //!
 //! Frame:
 //!
-//! ```ignore
+//! ```no_run
+//! use lightws::frame::{FrameHead, Fin, OpCode, PayloadLen, Mask};
 //! {
-//!     // encode a frame head
-//!     let head = FrameHead::new(...);
+//!     let mut buf = [0u8; 14];
+//!     // crate a frame head
+//!     let head = FrameHead::new(
+//!         Fin::N, OpCode::Binary,
+//!         Mask::None, PayloadLen::from_num(256)
+//!     );
+//!     // encode to buffer
 //!     let offset = unsafe {
 //!         head.encode_unchecked(&mut buf);
-//!     }
-//!
-//!     // decode a frame head
+//!     };
+//!     // decode from buffer
 //!     let (head, offset) = FrameHead::decode(&buf).unwrap();
 //! }
 //! ```
 //!
 //! Handshake:
 //!
-//! ```ignore
+//! ```no_run
+//! use lightws::handshake::{Request, Response, HttpHeader};
 //! {
+//!     let mut buf = [0u8; 256];
 //!     // make a client handshake request
-//!     let mut custom_headers = HttpHeader::new_storage();
-//!     let request = Request::new(&mut custom_headers);
+//!     let request = Request::new(b"/ws", b"example.com", b"sec-key..");
 //!     let offset = request.encode(&mut buf).unwrap();
 //!
 //!     // parse a server handshake response
 //!     let mut custom_headers = HttpHeader::new_storage();
-//!     let mut response = Response::new(&mut custom_headers);
+//!     let mut response = Response::new_storage(&mut custom_headers);
 //!     let offset = response.decode(&buf).unwrap();
 //! }
 //! ```

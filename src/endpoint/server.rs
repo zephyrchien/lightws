@@ -14,6 +14,7 @@ impl<IO: Read + Write, Role: ServerRole> Endpoint<IO, Role> {
     /// Send websocket upgrade response to IO source, return
     /// the number of bytes transmitted.
     /// Response data are encoded to the provided buffer.
+    ///
     /// This function will block until all data
     /// are written to IO source or an error occurs.
     pub fn send_response<const N: usize>(
@@ -31,6 +32,7 @@ impl<IO: Read + Write, Role: ServerRole> Endpoint<IO, Role> {
     /// the number of bytes transmitted.
     /// Received data are stored in the provided buffer, and parsed
     /// as [`Request`].
+    ///
     /// This function will block on reading data, until there is enough
     /// data to parse a request or an error occurs.
     ///
@@ -50,6 +52,7 @@ impl<IO: Read + Write, Role: ServerRole> Endpoint<IO, Role> {
     }
 
     /// Perform a simple websocket server handshake, return a new websocket stream.
+    ///
     /// This function is a combination of [`recv_request`](Self::recv_request)
     /// and [`send_response`](Self::send_response), without accessing [`Request`].
     /// it will block until the handshake completes, or an error occurs.    

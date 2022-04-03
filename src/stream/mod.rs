@@ -1,4 +1,25 @@
 //! Websocket stream.
+//!
+//! [`Stream`] is a simple wrapper of the underlying IO source,
+//! with small stack buffers to save states.
+//!
+//! It is transparent to call `Read` or `Write` on Stream:
+//!
+//! ```ignore
+//! {
+//!     // establish connection, handshake
+//!     let stream = ...
+//!     // read some data
+//!     stream.read(&mut buf)?;
+//!     // write some data
+//!     stream.write(&buf)?;
+//! }
+//! ```
+//!
+//! One `Read` or `Write` leads to **at most One**
+//! operation(or syscall) on the underlying IO source.
+//! Stream itself does not buffer any payload data during
+//! a `Read` or `Write`, so there is no extra heap allocation.
 
 mod read;
 mod write;
@@ -20,26 +41,13 @@ use crate::role::RoleHelper;
 
 /// Websocket stream.
 ///
-/// This is a simple wrapper of the underlying IO source,
-/// using small stack buffers to save states.
+/// Depending on `IO`, [`Stream`] implements [`std::io::Read`] and [`std::io::Write`]
+/// or [`tokio::io::AsyncRead`] and [`tokio::io::AsyncWrite`].
 ///
-/// It is transparent to call `Read` or `Write` on Stream:
+/// `Role` decides whether to mask payload data.
+/// It is reserved to provide extra infomation to apply optimizations.
 ///
-/// ```ignore
-/// {
-///     // establish connection, handshake
-///     let stream = ...
-///     // read some data
-///     stream.read(&mut buf);
-///     // write some data
-///     stream.write(&buf);
-/// }
-/// ```
-///
-/// One `Read` or `Write` leads to **at most One**
-/// operation(or syscall) on the underlying IO source.
-/// Stream itself does not buffer any payload data during
-/// a `Read` or `Write`, so there is no extra heap allocation.
+/// See also: `Stream::read`, `Stream::write`.
 pub struct Stream<IO, Role> {
     io: IO,
     read_state: ReadState,
