@@ -32,7 +32,7 @@ where
 
 pub unsafe fn recv_request<'h, 'b: 'h, F, IO, const N: usize>(
     io: &mut IO,
-    buf: &'b mut [u8],
+    buf: &mut [u8],
     request: &mut Request<'h, 'b, N>,
     mut read: F,
 ) -> Poll<Result<usize>>

@@ -4,6 +4,13 @@ mod detail;
 mod client;
 mod server;
 
+cfg_if::cfg_if! {
+    if #[cfg(feature = "tokio")] {
+        mod async_client;
+        mod async_server;
+    }
+}
+
 use std::marker::PhantomData;
 
 /// Client or server endpoint.

@@ -10,11 +10,18 @@ keywords = ["websocket", "network", "proxy"]
 edition = "2021"
 license = "MIT"
 
+[features]
+default = ["async"]
+async = ["tokio"]
+
 [dependencies]
+cfg-if = "1"
 rand = "0.8"
 sha1 = "0.10"
 base64 = "0.20.0-alpha.1"
 httparse = "1"
+tokio = { version = "1", optional = true }
+
 
 [dev-dependencies]
 log = "0.4"

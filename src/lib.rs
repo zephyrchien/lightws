@@ -4,6 +4,7 @@
 #![feature(const_slice_index)]
 #![feature(read_buf)]
 #![feature(ready_macro)]
+#![feature(future_poll_fn)]
 
 //! Lightweight websocket implement for proxy tools.
 //!

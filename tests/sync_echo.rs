@@ -29,7 +29,7 @@ fn sync_echo() {
         let mut buf = vec![0u8; 1024];
         let (tcp, _) = lis.accept().unwrap();
         debug!("server: tcp accepted!");
-        let mut ws = Endpoint::<_, Server>::accept(tcp, &mut buf, HOST, PATH).unwrap();
+        let mut ws = Endpoint::<_, Server>::accept_sync(tcp, &mut buf, HOST, PATH).unwrap();
         debug!("server: websocket accepted!");
 
         loop {
@@ -49,7 +49,7 @@ fn sync_echo() {
         thread::sleep(Duration::from_millis(500));
         let tcp = TcpStream::connect(ADDR).unwrap();
         debug!("client: tcp connected!");
-        let mut ws = Endpoint::<_, Client>::connect(tcp, &mut buf, HOST, PATH).unwrap();
+        let mut ws = Endpoint::<_, Client>::connect_sync(tcp, &mut buf, HOST, PATH).unwrap();
         debug!("client: websocket connected!");
 
         for i in 1..=5 {
