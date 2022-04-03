@@ -5,10 +5,10 @@ use crate::handshake::Request;
 use crate::handshake::Response;
 use crate::error::HandshakeError;
 
-pub fn send_response<F, IO, const N: usize>(
+pub fn send_response<'h, 'b: 'h, F, IO, const N: usize>(
     io: &mut IO,
     buf: &mut [u8],
-    response: &Response<N>,
+    response: &Response<'h, 'b, N>,
     mut write: F,
 ) -> Poll<Result<usize>>
 where
@@ -30,7 +30,7 @@ where
     Poll::Ready(Ok(total))
 }
 
-pub fn recv_request<'h, 'b: 'h, F, IO, const N: usize>(
+pub unsafe fn recv_request<'h, 'b: 'h, F, IO, const N: usize>(
     io: &mut IO,
     buf: &'b mut [u8],
     request: &mut Request<'h, 'b, N>,
@@ -44,7 +44,7 @@ where
 
     // WARNING !! I am breaking rust's borrow rules here.
     // Caller must not modify the buffer while response is in use.
-    let buf_const: &'b [u8] = unsafe { &*(buf as *const [u8]) };
+    let buf_const: &'b [u8] = &*(buf as *const [u8]);
 
     while offset < total {
         let n = ready!(read(io, &mut buf[offset..]))?;

@@ -46,28 +46,59 @@ impl<'h, 'b: 'h, const N: usize> HeaderHelper for Request<'h, 'b, N> {
 }
 
 impl<'h, 'b: 'h> Request<'h, 'b> {
-    /// Create with user provided headers, other fields are left empty.
-    /// The max decode header size is [`MAX_ALLOW_HEADERS`].
+    /// Create a new request without extra headers. This is usually used to send
+    /// a request.
     #[inline]
-    pub const fn new(other_headers: &'h mut [HttpHeader<'b>]) -> Self {
+    pub const fn new(path: &'b [u8], host: &'b [u8], sec_key: &'b [u8]) -> Self {
         Self {
-            path: b"",
-            host: b"",
-            sec_key: b"",
+            path,
+            host,
+            sec_key,
+            other_headers: &mut [],
+        }
+    }
+
+    /// Create a new request with extra headers. This is usually used to send
+    /// a request.
+    #[inline]
+    pub const fn new_with_headers(
+        path: &'b [u8],
+        host: &'b [u8],
+        sec_key: &'b [u8],
+        other_headers: &'h mut [HttpHeader<'b>],
+    ) -> Self {
+        Self {
+            path,
+            host,
+            sec_key,
+            other_headers,
+        }
+    }
+
+    /// Create with user provided headers storage, other fields are left empty.
+    /// The max decode header size is [`MAX_ALLOW_HEADERS`].
+    /// This is usually used to receive a request.
+    #[inline]
+    pub const fn new_storage(other_headers: &'h mut [HttpHeader<'b>]) -> Self {
+        Self {
+            path: &[],
+            host: &[],
+            sec_key: &[],
             other_headers,
         }
     }
 }
 
 impl<'h, 'b: 'h, const N: usize> Request<'h, 'b, N> {
-    /// Create with user provided headers, other fields are left empty.
+    /// Create with user provided headers storage, other fields are left empty.
     /// The const generic paramater represents the max decode header size.
+    /// This is usually used to receive a request.
     #[inline]
-    pub const fn new_custom(other_headers: &'h mut [HttpHeader<'b>]) -> Self {
+    pub const fn new_custom_storage(other_headers: &'h mut [HttpHeader<'b>]) -> Self {
         Self {
-            path: b"",
-            host: b"",
-            sec_key: b"",
+            path: &[],
+            host: &[],
+            sec_key: &[],
             other_headers,
         }
     }
@@ -244,7 +275,7 @@ mod test {
             );
 
             let mut other_headers = HttpHeader::new_custom_storage::<1024>();
-            let mut request = Request::<1024>::new_custom(&mut other_headers);
+            let mut request = Request::<1024>::new_custom_storage(&mut other_headers);
             let decode_n = request.decode(headers.as_bytes()).unwrap();
 
             assert_eq!(decode_n, headers.len());
@@ -292,7 +323,7 @@ mod test {
                 );
 
                 let mut other_headers = HttpHeader::new_storage();
-                let mut request = Request::new(&mut other_headers);
+                let mut request = Request::new_storage(&mut other_headers);
                 let decode_n = request.decode(headers.as_bytes()).unwrap();
                 assert_eq!(decode_n, headers.len());
                 assert_eq!(request.host, $host.as_bytes());

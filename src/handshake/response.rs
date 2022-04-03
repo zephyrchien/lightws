@@ -41,24 +41,49 @@ impl<'h, 'b: 'h, const N: usize> HeaderHelper for Response<'h, 'b, N> {
 }
 
 impl<'h, 'b: 'h> Response<'h, 'b> {
-    /// Create with user provided headers, other fields are left empty.
-    /// The max decode header size is [`MAX_ALLOW_HEADERS`].
+    /// Create a new response without extra headers. This is usually used to send
+    /// a response.
     #[inline]
-    pub const fn new(other_headers: &'h mut [HttpHeader<'b>]) -> Self {
+    pub const fn new(sec_accept: &'b [u8]) -> Self {
         Self {
-            sec_accept: b"",
+            sec_accept,
+            other_headers: &mut [],
+        }
+    }
+
+    /// Create a new response with extra headers. This is usually used to send
+    /// a response.
+    #[inline]
+    pub const fn new_with_headers(
+        sec_accept: &'b [u8],
+        other_headers: &'h mut [HttpHeader<'b>],
+    ) -> Self {
+        Self {
+            sec_accept,
+            other_headers,
+        }
+    }
+
+    /// Create with user provided headers storage, other fields are left empty.
+    /// The max decode header size is [`MAX_ALLOW_HEADERS`].
+    /// This is usually used to receive a response.
+    #[inline]
+    pub const fn new_storage(other_headers: &'h mut [HttpHeader<'b>]) -> Self {
+        Self {
+            sec_accept: &[],
             other_headers,
         }
     }
 }
 
 impl<'h, 'b: 'h, const N: usize> Response<'h, 'b, N> {
-    /// Create with user provided headers, other fields are left empty.
+    /// Create with user provided headers storage, other fields are left empty.
     /// The const generic paramater represents the max decode header size.
+    /// This is usually used to receive a response.
     #[inline]
-    pub const fn new_custom(other_headers: &'h mut [HttpHeader<'b>]) -> Self {
+    pub const fn new_custom_storage(other_headers: &'h mut [HttpHeader<'b>]) -> Self {
         Self {
-            sec_accept: b"",
+            sec_accept: &[],
             other_headers,
         }
     }
@@ -209,7 +234,7 @@ mod test {
             );
 
             let mut other_headers = HttpHeader::new_custom_storage::<1024>();
-            let mut response = Response::<1024>::new_custom(&mut other_headers);
+            let mut response = Response::<1024>::new_custom_storage(&mut other_headers);
             let decode_n = response.decode(headers.as_bytes()).unwrap();
 
             assert_eq!(decode_n, headers.len());
@@ -255,7 +280,7 @@ mod test {
                 );
 
                 let mut other_headers = HttpHeader::new_storage();
-                let mut response = Response::new(&mut other_headers);
+                let mut response = Response::new_storage(&mut other_headers);
                 let decode_n = response.decode(headers.as_bytes()).unwrap();
                 assert_eq!(decode_n, headers.len());
                 assert_eq!(response.sec_accept, $sec_accept.as_bytes());
