@@ -57,7 +57,9 @@ where
                 },
                 buf.initialize_unfilled(),
             ) {
-                Poll::Ready(Ok(0)) if this.is_read_partial_head() => continue,
+                Poll::Ready(Ok(0)) if this.is_read_partial_head() || !this.is_read_end() => {
+                    continue
+                }
                 Poll::Ready(Ok(n)) => {
                     buf.advance(n);
                     return Poll::Ready(Ok(()));

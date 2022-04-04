@@ -43,7 +43,7 @@ where
         let this = self.get_mut();
         loop {
             match write_some(this, |io, buf| Pin::new(io).poll_write_vectored(cx, buf), buf) {
-                Poll::Ready(Ok(0)) if this.is_write_partial_head() => continue,
+                Poll::Ready(Ok(0)) if this.is_write_partial_head() || !this.is_write_zero()=> continue,
                 Poll::Ready(Ok(n)) => return Poll::Ready(Ok(n)),
                 Poll::Ready(Err(e)) => return Poll::Ready(Err(e)),
                 Poll::Pending => return Poll::Pending,
