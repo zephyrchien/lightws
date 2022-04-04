@@ -32,16 +32,19 @@ fn sync_bidi_copy() {
         let mut buf = vec![0u8; 1024];
         let (tcp, _) = lis1.accept().unwrap();
         debug!("relay: tcp accepted!");
-        let mut ws_local_read = Endpoint::<_, Server>::accept(tcp, &mut buf, HOST, PATH).unwrap();
+        let ws_local_read = Endpoint::<_, Server>::accept(tcp, &mut buf, HOST, PATH).unwrap();
         debug!("relay: websocket accepted!");
 
         let tcp = TcpStream::connect(ADDR2).unwrap();
         debug!("relay: tcp connected!");
-        let mut ws_remote_read = Endpoint::<_, Client>::connect(tcp, &mut buf, HOST, PATH).unwrap();
+        let ws_remote_read = Endpoint::<_, Client>::connect(tcp, &mut buf, HOST, PATH).unwrap();
         debug!("relay: websocket connected!");
 
-        let mut ws_local_write = ws_local_read.try_clone().unwrap();
-        let mut ws_remote_write = ws_remote_read.try_clone().unwrap();
+        let mut ws_local_write = ws_local_read.try_clone().unwrap().guard();
+        let mut ws_remote_write = ws_remote_read.try_clone().unwrap().guard();
+
+        let mut ws_local_read = ws_local_read.guard();
+        let mut ws_remote_read = ws_remote_read.guard();
 
         let t1 = thread::spawn(move || {
             let _ = std::io::copy(&mut ws_local_read, &mut ws_remote_write);
