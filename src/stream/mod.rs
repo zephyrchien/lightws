@@ -17,11 +17,10 @@
 //! ```
 //!
 //! A new established [`Stream`] is in [`Direct`] (default) mode, where
-//! a `Wead` or `Rrite` leads to **at most one** syscall, and
+//! a `Read` or `Write` leads to **at most one** syscall, and
 //! an `Ok(0)` will be returned if frame head is not completely read or written.
 //! It can be converted to [`Guarded`] mode, which wraps `Read` or `Write` in a loop,
 //! where `Ok(0)` is handled internally.
-//! (This only works for `Async IO`. `Sync IO` is not wrapped!)
 //!
 //! Stream itself does not buffer any payload data during
 //! a `Read` or `Write`, so there is no extra heap allocation.

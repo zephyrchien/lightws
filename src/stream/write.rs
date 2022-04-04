@@ -1,7 +1,7 @@
 use std::io::{Write, Result};
 use std::task::Poll;
 
-use super::{Stream, RoleHelper};
+use super::{Stream, RoleHelper, Guarded};
 use super::detail::write_some;
 
 impl<IO: Write, Role: RoleHelper> Write for Stream<IO, Role> {
@@ -27,24 +27,30 @@ impl<IO: Write, Role: RoleHelper> Write for Stream<IO, Role> {
     /// the underlying IO source.
     fn flush(&mut self) -> Result<()> { self.io.flush() }
 
-    /// Override the default implement, allowing `Ok(0)` if
-    /// the frame head is not completely written.
-    fn write_all(&mut self, mut buf: &[u8]) -> Result<()> {
-        use std::io::ErrorKind;
-        while !buf.is_empty() {
-            match self.write(buf) {
-                Ok(0) => {
-                    if self.is_write_zero() {
-                        return Err(ErrorKind::WriteZero.into());
-                    }
+    /// **This is NOT supported!**
+    fn write_all(&mut self, _: &[u8]) -> Result<()> {
+        panic!("Unsupported");
+    }
+}
+
+impl<IO: Write, Role: RoleHelper> Write for Stream<IO, Role, Guarded> {
+    /// Wrap write in a loop.
+    /// Continue to write if frame head is not completely written.
+    fn write(&mut self, buf: &[u8]) -> Result<usize> {
+        loop {
+            match write_some(self, |io, iovec| io.write_vectored(iovec).into(), buf) {
+                Poll::Ready(Ok(0)) if self.is_write_partial_head() || !self.is_write_zero() => {
+                    continue
                 }
-                Ok(n) => buf = &buf[n..],
-                Err(ref e) if e.kind() == ErrorKind::Interrupted => {}
-                Err(e) => return Err(e),
+                Poll::Ready(x) => return x,
+                Poll::Pending => unreachable!(),
             }
         }
-        Ok(())
     }
+
+    /// The writer does not buffer any data, simply flush
+    /// the underlying IO source.
+    fn flush(&mut self) -> Result<()> { self.io.flush() }
 }
 
 #[cfg(test)]
@@ -93,7 +99,7 @@ mod test {
                 cursor: 0,
             };
 
-            let mut stream = Stream::<_, R>::new(io);
+            let mut stream = Stream::<_, R>::new(io).guard();
 
             stream.write_all(&data).unwrap();
 

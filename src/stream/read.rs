@@ -1,7 +1,7 @@
 use std::io::{Read, Result};
 use std::task::Poll;
 
-use super::{Stream, RoleHelper};
+use super::{Stream, RoleHelper, Guarded};
 use super::detail::read_some;
 
 impl<IO: Read, Role: RoleHelper> Read for Stream<IO, Role> {
@@ -24,8 +24,39 @@ impl<IO: Read, Role: RoleHelper> Read for Stream<IO, Role> {
         }
     }
 
-    /// Override default implement, exit when reaching `EOF`
-    /// or receiving a `Close` frame.
+    /// **This is NOT supported!**
+    fn read_to_end(&mut self, _: &mut Vec<u8>) -> Result<usize> {
+        panic!("Unsupported");
+    }
+
+    /// **This is NOT supported!**
+    fn read_exact(&mut self, _: &mut [u8]) -> Result<()> {
+        panic!("Unsupported");
+    }
+
+    /// **This is NOT supported!**
+    fn read_to_string(&mut self, _: &mut String) -> Result<usize> {
+        panic!("Unsupported");
+    }
+}
+
+impl<IO: Read, Role: RoleHelper> Read for Stream<IO, Role, Guarded> {
+    /// Wrap read in a loop.
+    /// Continue to read if frame head is not complete.
+    fn read(&mut self, buf: &mut [u8]) -> Result<usize> {
+        loop {
+            match read_some(self, |io, buf| io.read(buf).into(), buf) {
+                Poll::Ready(Ok(0)) if self.is_read_partial_head() || !self.is_read_end() => {
+                    continue
+                }
+                Poll::Ready(x) => return x,
+                Poll::Pending => unreachable!(),
+            }
+        }
+    }
+
+    /// Override default implement, extend reserved buffer size,
+    /// so that there is enough space to accommodate frame head.
     fn read_to_end(&mut self, buf: &mut Vec<u8>) -> Result<usize> {
         use std::io::ReadBuf;
         use std::io::ErrorKind;
@@ -52,7 +83,7 @@ impl<IO: Read, Role: RoleHelper> Read for Stream<IO, Role> {
                 Err(e) => return Err(e),
             }
 
-            if read_buf.filled_len() == 0 && self.is_read_end() {
+            if read_buf.filled_len() == 0 {
                 return Ok(buf.len() - start_len);
             }
 
@@ -74,11 +105,7 @@ impl<IO: Read, Role: RoleHelper> Read for Stream<IO, Role> {
 
                 loop {
                     match self.read(&mut probe) {
-                        Ok(0) => {
-                            if self.is_read_end() {
-                                return Ok(buf.len() - start_len);
-                            }
-                        }
+                        Ok(0) => return Ok(buf.len() - start_len),
                         Ok(n) => {
                             buf.extend_from_slice(&probe[..n]);
                             break;
@@ -89,16 +116,6 @@ impl<IO: Read, Role: RoleHelper> Read for Stream<IO, Role> {
                 }
             }
         }
-    }
-
-    /// **This is NOT supported!**
-    fn read_exact(&mut self, _: &mut [u8]) -> Result<()> {
-        panic!("Unsupported");
-    }
-
-    /// **This is NOT supported!**
-    fn read_to_string(&mut self, _: &mut String) -> Result<usize> {
-        panic!("Unsupported");
     }
 }
 
@@ -148,7 +165,7 @@ mod test {
             };
 
             let mut buf = Vec::new();
-            let mut stream = Stream::<_, R2>::new(io);
+            let mut stream = Stream::<_, R2>::new(io).guard();
 
             let read_n = stream.read_to_end(&mut buf).unwrap();
 
@@ -187,6 +204,8 @@ mod test {
             assert!(stream.is_read_end());
             assert!(stream.is_read_eof());
 
+            let mut stream = stream.guard();
+
             let n = stream.read_to_end(&mut buf).unwrap();
             assert_eq!(n, 0);
             assert!(stream.is_read_end());
@@ -214,6 +233,8 @@ mod test {
             let n = stream.read(&mut buf).unwrap();
             assert_eq!(n, 0);
 
+            let mut stream = stream.guard();
+
             let n = stream.read_to_end(&mut buf).unwrap();
             assert_eq!(n, 0);
             assert!(stream.is_read_end());
@@ -239,7 +260,7 @@ mod test {
             };
 
             let mut buf = Vec::new();
-            let mut stream = Stream::<_, R2>::new(io);
+            let mut stream = Stream::<_, R2>::new(io).guard();
 
             let read_n = stream.read_to_end(&mut buf).unwrap();
 
@@ -281,7 +302,7 @@ mod test {
             };
 
             let mut buf = Vec::new();
-            let mut stream = Stream::<_, R2>::new(io);
+            let mut stream = Stream::<_, R2>::new(io).guard();
 
             let read_n = stream.read_to_end(&mut buf).unwrap();
 
@@ -324,7 +345,7 @@ mod test {
             };
 
             let mut buf = Vec::new();
-            let mut stream = Stream::<_, R2>::new(io);
+            let mut stream = Stream::<_, R2>::new(io).guard();
 
             let read_n = stream.read_to_end(&mut buf).unwrap();
 
