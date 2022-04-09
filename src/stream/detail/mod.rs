@@ -14,6 +14,6 @@ fn min_len(buf_len: usize, length: u64) -> usize {
     #[cfg(not(target_pointer_width = "64"))]
     {
         let next = std::cmp::min(usize::MAX as u64, length) as usize;
-        std::cmp::min(buf_len, length)
+        std::cmp::min(buf_len, next)
     }
 }

@@ -1,6 +1,6 @@
 [package]
 name = "lightws"
-version = "0.4.4"
+version = "0.4.5"
 authors = ["zephyr <i@zephyr.moe>"]
 description = "Lightweight websocket implement for stream transmission."
 repository = "https://github.com/zephyrchien/lightws"
