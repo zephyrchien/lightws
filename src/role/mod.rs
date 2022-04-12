@@ -21,7 +21,9 @@ pub trait RoleHelper: Clone + Copy {
     const LONG_FRAME_HEAD_LEN: u8;
 
     fn new() -> Self;
-    fn new_write_mask() -> Mask;
+    fn write_mask(&self) -> Mask;
+    // by default this is a no-op
+    fn set_write_mask(&mut self, _: [u8; 4]) {}
 }
 
 /// Client marker.
@@ -43,7 +45,7 @@ pub struct Server;
 
 /// Standard client using random mask key.
 #[derive(Clone, Copy)]
-pub struct StandardClient;
+pub struct StandardClient([u8; 4]);
 
 impl RoleHelper for Client {
     const SHORT_FRAME_HEAD_LEN: u8 = 2;
@@ -54,7 +56,7 @@ impl RoleHelper for Client {
     fn new() -> Self { Self {} }
 
     #[inline]
-    fn new_write_mask() -> Mask { Mask::Skip }
+    fn write_mask(&self) -> Mask { Mask::Skip }
 }
 
 impl RoleHelper for Server {
@@ -67,7 +69,7 @@ impl RoleHelper for Server {
 
     /// Server should not mask the payload.
     #[inline]
-    fn new_write_mask() -> Mask { Mask::None }
+    fn write_mask(&self) -> Mask { Mask::None }
 }
 
 impl RoleHelper for StandardClient {
@@ -76,10 +78,13 @@ impl RoleHelper for StandardClient {
     const LONG_FRAME_HEAD_LEN: u8 = 2 + 8;
 
     #[inline]
-    fn new() -> Self { Self {} }
+    fn new() -> Self { Self(crate::frame::mask::new_mask_key()) }
 
     #[inline]
-    fn new_write_mask() -> Mask { Mask::Key(crate::frame::mask::new_mask_key()) }
+    fn write_mask(&self) -> Mask { Mask::Key(self.0) }
+
+    #[inline]
+    fn set_write_mask(&mut self, mask: [u8; 4]) { self.0 = mask; }
 }
 
 impl ClientRole for Client {}

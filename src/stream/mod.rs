@@ -28,6 +28,7 @@
 mod read;
 mod write;
 
+mod ctrl;
 mod state;
 mod detail;
 mod special;
@@ -170,7 +171,7 @@ mod test {
         let head = FrameHead::new(
             Fin::Y,
             opcode,
-            R::new_write_mask(),
+            R::write_mask(&R::new()),
             PayloadLen::from_num(len as u64),
         );
 

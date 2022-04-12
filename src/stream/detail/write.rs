@@ -7,19 +7,11 @@ use super::super::{Stream, RoleHelper};
 use super::super::state::{WriteState, HeadStore};
 
 use crate::frame::FrameHead;
-use crate::frame::{Fin, OpCode, PayloadLen};
+use crate::frame::{Fin, OpCode, Mask, PayloadLen};
 
 #[inline]
-fn write_data_frame<Role>(store: &mut HeadStore, len: u64)
-where
-    Role: RoleHelper,
-{
-    let head = FrameHead::new(
-        Fin::Y,
-        OpCode::Binary,
-        Role::new_write_mask(),
-        PayloadLen::from_num(len),
-    );
+fn write_data_frame(store: &mut HeadStore, mask: Mask, len: u64) {
+    let head = FrameHead::new(Fin::Y, OpCode::Binary, mask, PayloadLen::from_num(len));
     // The buffer is large enough to accommodate any kind of frame head.
     let n = unsafe { head.encode_unchecked(store.as_mut()) };
     store.set_wr_pos(n);
@@ -43,7 +35,8 @@ where
             let frame_len = buf.len();
 
             if head_store.is_empty() {
-                write_data_frame::<Role>(&mut head_store, frame_len as u64);
+                let mask = stream.role.write_mask();
+                write_data_frame(&mut head_store, mask, frame_len as u64);
             }
             // frame head(maybe partial) + payload
             let iovec = [IoSlice::new(head_store.read()), IoSlice::new(buf)];
