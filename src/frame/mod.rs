@@ -30,7 +30,7 @@ pub mod mask;
 
 pub use flag::{Fin, OpCode};
 pub use length::PayloadLen;
-pub use mask::Mask;
+pub use mask::{Mask, new_mask_key, apply_mask4};
 
 /// Websocket frame head.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
