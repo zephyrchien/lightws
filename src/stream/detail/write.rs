@@ -35,7 +35,7 @@ where
             let frame_len = buf.len();
 
             if head_store.is_empty() {
-                let mask = stream.role.write_mask();
+                let mask = stream.role.write_mask_key();
                 write_data_frame(&mut head_store, mask, frame_len as u64);
             }
             // frame head(maybe partial) + payload

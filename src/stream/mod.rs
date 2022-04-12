@@ -29,28 +29,28 @@
 //!
 //! Data written to stream are not automatically masked. A standard client should mask data
 //! before sending it. The mask key is prepared by a [`ClientRole`](crate::role::ClientRole),
-//! which can be set or fetched via [`Stream::set_write_mask`] and [`Stream::write_mask`].
+//! which can be set or fetched via [`Stream::set_write_mask_key`] and [`Stream::write_mask_key`].
 //!
 //! Example:
 //!
 //! ```no_run
 //! use std::io::{Read, Write};
 //! use std::net::TcpStream;
-//! use lightws::role::Client;
+//! use lightws::role::StandardClient;
 //! use lightws::endpoint::Endpoint;
 //! use lightws::frame::{new_mask_key, apply_mask4};
 //! fn write_data() -> std::io::Result<()> {  
 //!     let mut buf = [0u8; 256];
 //!     let mut tcp = TcpStream::connect("example.com:80")?;
-//!     let mut ws = Endpoint::<TcpStream, Client>::connect(tcp, &mut buf, "example.com", "/ws")?;
-//! 
+//!     let mut ws = Endpoint::<TcpStream, StandardClient>::connect(tcp, &mut buf, "example.com", "/ws")?;
+//!
 //!     // mask data
 //!     let key = new_mask_key();
 //!     apply_mask4(key, &mut buf);
-//! 
+//!
 //!     // set mask key for next write
-//!     ws.set_write_mask(key)?;
-//! 
+//!     ws.set_write_mask_key(key)?;
+//!
 //!     // write some data
 //!     ws.write_all(&buf)?;
 //!     Ok(())
@@ -203,7 +203,7 @@ mod test {
         let head = FrameHead::new(
             Fin::Y,
             opcode,
-            R::write_mask(&R::new()),
+            R::write_mask_key(&R::new()),
             PayloadLen::from_num(len as u64),
         );
 
