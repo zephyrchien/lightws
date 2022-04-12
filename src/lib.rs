@@ -37,7 +37,7 @@
 //!     // read some data
 //!     let n = ws.read(&mut buf)?;
 //!     // write some data
-//!     let n = ws.write(&mut buf)?;
+//!     let n = ws.write(&buf)?;
 //!     Ok(())
 //! }
 //! ```
@@ -58,7 +58,7 @@
 //!     // read some data
 //!     let n = ws.read(&mut buf).await?;
 //!     // write some data
-//!     let n = ws.write(&mut buf).await?;
+//!     let n = ws.write(&buf).await?;
 //!     Ok(())
 //! }
 //! ```
