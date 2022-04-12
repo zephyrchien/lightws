@@ -60,6 +60,7 @@ pub struct Guarded {}
 /// See also: `Stream::read`, `Stream::write`.
 pub struct Stream<IO, Role, Guard = Direct> {
     io: IO,
+    role: Role,
     read_state: ReadState,
     write_state: WriteState,
     heartbeat: HeartBeat,
@@ -91,9 +92,10 @@ impl<IO, Role> Stream<IO, Role> {
     /// Create websocket stream from IO source directly,
     /// without a handshake.
     #[inline]
-    pub const fn new(io: IO) -> Self {
+    pub const fn new(io: IO, role: Role) -> Self {
         Stream {
             io,
+            role,
             read_state: ReadState::new(),
             write_state: WriteState::new(),
             heartbeat: HeartBeat::new(),
@@ -107,6 +109,7 @@ impl<IO, Role> Stream<IO, Role> {
     pub fn guard(self) -> Stream<IO, Role, Guarded> {
         Stream {
             io: self.io,
+            role: self.role,
             read_state: self.read_state,
             write_state: self.write_state,
             heartbeat: self.heartbeat,
@@ -194,7 +197,7 @@ mod test {
             // data written to a client stream should be read as a server stream.
             // here we read/write on the same (client/server)stream.
             // this is not correct in practice, but our program can still handle it.
-            let mut stream = Stream::<_, R>::new(io);
+            let mut stream = Stream::<_, R>::new(io, R::new());
 
             let data: Vec<u8> = std::iter::repeat(rand::random::<u8>()).take(len).collect();
             let mut data2: Vec<u8> = Vec::new();

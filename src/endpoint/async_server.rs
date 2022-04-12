@@ -77,6 +77,6 @@ impl<IO: AsyncRead + AsyncWrite + Unpin, Role: ServerRole> Endpoint<IO, Role> {
         let response = Response::new(&sec_accept);
         let _ = Self::send_response_async(&mut io, buf, &response).await?;
 
-        Ok(Stream::new(io))
+        Ok(Stream::new(io, Role::new()))
     }
 }

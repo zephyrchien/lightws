@@ -67,7 +67,7 @@ mod test {
             let (frame, data) = make_frame::<R>(OpCode::Binary, n);
 
             let io: Vec<u8> = Vec::new();
-            let mut stream = Stream::<_, R>::new(io);
+            let mut stream = Stream::new(io, R::new());
 
             let write_n = stream.write(&data).unwrap();
 
@@ -99,7 +99,7 @@ mod test {
                 cursor: 0,
             };
 
-            let mut stream = Stream::<_, R>::new(io).guard();
+            let mut stream = Stream::new(io, R::new()).guard();
 
             stream.write_all(&data).unwrap();
 

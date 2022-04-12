@@ -132,7 +132,7 @@ mod test {
         fn read<R1: RoleHelper, R2: RoleHelper>(n: usize) {
             let (frame, data) = make_frame::<R1>(OpCode::Binary, n);
 
-            let mut stream = Stream::<_, R2>::new(frame.as_slice());
+            let mut stream = Stream::new(frame.as_slice(), R2::new());
 
             let mut buf = vec![0; n + 14];
             let read_n = stream.read(&mut buf).unwrap();
@@ -165,7 +165,7 @@ mod test {
             };
 
             let mut buf = Vec::new();
-            let mut stream = Stream::<_, R2>::new(io).guard();
+            let mut stream = Stream::new(io, R2::new()).guard();
 
             let read_n = stream.read_to_end(&mut buf).unwrap();
 
@@ -197,7 +197,7 @@ mod test {
                 wlimit: 0,
                 cursor: 0,
             };
-            let mut stream = Stream::<_, R>::new(io);
+            let mut stream = Stream::new(io, R::new());
             let mut buf = vec![0; 32];
             let n = stream.read(&mut buf).unwrap();
             assert_eq!(n, 0);
@@ -226,7 +226,7 @@ mod test {
                 cursor: 0,
             };
 
-            let mut stream = Stream::<_, R2>::new(io);
+            let mut stream = Stream::new(io, R2::new());
 
             let mut buf = vec![0; 32];
 
@@ -260,7 +260,7 @@ mod test {
             };
 
             let mut buf = Vec::new();
-            let mut stream = Stream::<_, R2>::new(io).guard();
+            let mut stream = Stream::new(io, R2::new()).guard();
 
             let read_n = stream.read_to_end(&mut buf).unwrap();
 
@@ -302,7 +302,7 @@ mod test {
             };
 
             let mut buf = Vec::new();
-            let mut stream = Stream::<_, R2>::new(io).guard();
+            let mut stream = Stream::new(io, R2::new()).guard();
 
             let read_n = stream.read_to_end(&mut buf).unwrap();
 
@@ -345,7 +345,7 @@ mod test {
             };
 
             let mut buf = Vec::new();
-            let mut stream = Stream::<_, R2>::new(io).guard();
+            let mut stream = Stream::new(io, R2::new()).guard();
 
             let read_n = stream.read_to_end(&mut buf).unwrap();
 

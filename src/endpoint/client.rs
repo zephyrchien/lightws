@@ -75,7 +75,7 @@ impl<IO: Read + Write, Role: ClientRole> Endpoint<IO, Role> {
             return Err(HandshakeError::SecWebSocketAccept.into());
         }
 
-        Ok(Stream::new(io))
+        Ok(Stream::new(io, Role::new()))
     }
 }
 

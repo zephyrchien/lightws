@@ -77,7 +77,7 @@ impl<IO: Read + Write, Role: ServerRole> Endpoint<IO, Role> {
         let response = Response::new(&sec_accept);
         let _ = Self::send_response(&mut io, buf, &response)?;
 
-        Ok(Stream::new(io))
+        Ok(Stream::new(io, Role::new()))
     }
 }
 
