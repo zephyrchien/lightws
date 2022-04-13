@@ -23,6 +23,15 @@ pub(crate) const unsafe fn slice_to_array<T, const N: usize>(slice: &[T]) -> &[T
     &*(slice as *const [T] as *const [T; N])
 }
 
+#[inline]
+#[allow(unused)]
+#[allow(clippy::mut_from_ref)]
+pub(crate) const unsafe fn const_cast<T: ?Sized>(x: &T) -> &mut T {
+    let const_ptr = x as *const T;
+    let mut_ptr = const_ptr as *mut T;
+    &mut *mut_ptr
+}
+
 #[cfg(test)]
 mod test {
     use super::*;

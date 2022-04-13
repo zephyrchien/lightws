@@ -13,6 +13,7 @@ license = "MIT"
 [features]
 default = ["async"]
 async = ["tokio"]
+unsafe_auto_mask_write = []
 
 [dependencies]
 cfg-if = "1"

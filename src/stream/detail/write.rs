@@ -1,21 +1,14 @@
 use std::io::Result;
 use std::io::IoSlice;
 use std::task::{Poll, ready};
+use std::marker::PhantomData;
 
 use super::min_len;
 use super::super::{Stream, RoleHelper};
 use super::super::state::{WriteState, HeadStore};
 
 use crate::frame::FrameHead;
-use crate::frame::{Fin, OpCode, Mask, PayloadLen};
-
-#[inline]
-fn write_data_frame(store: &mut HeadStore, mask: Mask, len: u64) {
-    let head = FrameHead::new(Fin::Y, OpCode::Binary, mask, PayloadLen::from_num(len));
-    // The buffer is large enough to accommodate any kind of frame head.
-    let n = unsafe { head.encode_unchecked(store.as_mut()) };
-    store.set_wr_pos(n);
-}
+use crate::frame::{Fin, OpCode, PayloadLen};
 
 pub fn write_some<F, IO, Role, Guard>(
     mut stream: &mut Stream<IO, Role, Guard>,
@@ -35,8 +28,9 @@ where
             let frame_len = buf.len();
 
             if head_store.is_empty() {
-                let mask = stream.role.write_mask_key();
-                write_data_frame(&mut head_store, mask, frame_len as u64);
+                // build frame head
+                // mask payload(this is unsafe) if unsafe_auto_mask_write is activated
+                WriteFrameHead::<Role>::write_data_frame(&mut head_store, &mut stream.role, buf);
             }
             // frame head(maybe partial) + payload
             let iovec = [IoSlice::new(head_store.read()), IoSlice::new(buf)];
@@ -84,6 +78,117 @@ where
                 stream.write_state = WriteState::WriteData(next - write_n as u64)
             }
             Poll::Ready(Ok(write_n))
+        }
+    }
+}
+
+struct WriteFrameHead<Role: RoleHelper> {
+    _marker: PhantomData<Role>,
+}
+
+trait WriteFrameHeadTrait<R> {
+    fn write_data_frame(_: &mut HeadStore, _: &mut R, _: &[u8]) {}
+}
+
+// use default impl
+impl<Role: RoleHelper> WriteFrameHeadTrait<Role> for WriteFrameHead<Role> {
+    #[inline]
+    default fn write_data_frame(store: &mut HeadStore, role: &mut Role, buf: &[u8]) {
+        let head = FrameHead::new(
+            Fin::Y,
+            OpCode::Binary,
+            role.write_mask_key(),
+            PayloadLen::from_num(buf.len() as u64),
+        );
+        // The buffer is large enough to accommodate any kind of frame head.
+        let n = unsafe { head.encode_unchecked(store.as_mut()) };
+        store.set_wr_pos(n);
+    }
+}
+
+// specialize
+#[cfg(feature = "unsafe_auto_mask_write")]
+impl WriteFrameHeadTrait<crate::role::StandardClient>
+    for WriteFrameHead<crate::role::StandardClient>
+{
+    #[inline]
+    fn write_data_frame(store: &mut HeadStore, role: &mut crate::role::StandardClient, buf: &[u8]) {
+        use crate::bleed::const_cast;
+        use crate::frame::{Mask, new_mask_key, apply_mask4};
+
+        let key = new_mask_key();
+        role.set_write_mask_key(key);
+        // !! const_cast a immutable reference
+        unsafe {
+            let buf = const_cast(buf);
+            apply_mask4(key, buf);
+        }
+
+        // below is the same of default impl
+        let head = FrameHead::new(
+            Fin::Y,
+            OpCode::Binary,
+            Mask::Key(key),
+            PayloadLen::from_num(buf.len() as u64),
+        );
+        // The buffer is large enough to accommodate any kind of frame head.
+        let n = unsafe { head.encode_unchecked(store.as_mut()) };
+        store.set_wr_pos(n);
+    }
+}
+
+#[cfg(all(test, feature = "unsafe_auto_mask_write"))]
+mod test {
+    use super::*;
+    use crate::bleed::Store;
+    use crate::frame::mask::*;
+    use crate::role::{Client, Server, StandardClient};
+
+    fn auto_mask<R: RoleHelper>(role: &mut R, buf: &[u8]) {
+        let mut store = Store::new();
+        WriteFrameHead::<R>::write_data_frame(&mut store, role, buf)
+    }
+
+    #[test]
+    fn auto_mask_active() {
+        for i in 0..4096 {
+            let mut buf: Vec<u8> = std::iter::repeat(rand::random::<u8>()).take(i).collect();
+            let buf2 = buf.clone();
+            assert_eq!(buf.len(), i);
+
+            let mut role = StandardClient::new();
+
+            for _ in 0..8 {
+                auto_mask(&mut role, &buf2);
+                let key = match role.write_mask_key() {
+                    Mask::Key(k) => k,
+                    _ => unreachable!(),
+                };
+                apply_mask4(key, &mut buf);
+                assert_eq!(buf, buf2);
+            }
+        }
+    }
+
+    #[test]
+    fn auto_mask_inactive() {
+        for i in 0..4096 {
+            let buf: Vec<u8> = std::iter::repeat(rand::random::<u8>()).take(i).collect();
+            let buf2 = buf.clone();
+            assert_eq!(buf.len(), i);
+
+            let mut client = Client::new();
+            let mut server = Server::new();
+
+            for _ in 0..8 {
+                auto_mask(&mut client, &buf2);
+                assert_eq!(buf, buf2);
+            }
+
+            for _ in 0..8 {
+                auto_mask(&mut server, &buf2);
+                assert_eq!(buf, buf2);
+            }
         }
     }
 }

@@ -19,16 +19,24 @@
 //! A new established [`Stream`] is in [`Direct`] (default) mode, where
 //! a `Read` or `Write` leads to **at most one** syscall, and
 //! an `Ok(0)` will be returned if frame head is not completely read or written.
-//! It can be converted to [`Guarded`] mode, which wraps `Read` or `Write` in a loop,
-//! where `Ok(0)` is handled internally.
+//! It can be converted to [`Guarded`] mode with [`Stream::guard`],
+//! which wraps `Read` or `Write` in a loop, where `Ok(0)` is handled internally.
 //!
 //! Stream itself does not buffer any payload data during
 //! a `Read` or `Write`, so there is no extra heap allocation.
 //!
-//! # Special attention
+//! # Masking payload
 //!
-//! Data written to stream are not automatically masked. A standard client should mask data
-//! before sending it. The mask key is prepared by a [`ClientRole`](crate::role::ClientRole),
+//! Data read from stream are automatically unmasked.
+//! However, data written to stream are **NOT** automatically masked,
+//! since a `Write` call requires an immutable `&[u8]`.
+//!
+//! A standard client(e.g. [`StandardClient`](crate::role::StandardClient))
+//! should mask the payload before sending it;
+//! A non-standard client (e.g. [`Client`](crate::role::Client)) which holds an empty mask key
+//! can simply skip this step.
+//!
+//! The mask key is prepared by [`ClientRole`](crate::role::ClientRole),
 //! which can be set or fetched via [`Stream::set_write_mask_key`] and [`Stream::write_mask_key`].
 //!
 //! Example:
@@ -56,6 +64,20 @@
 //!     Ok(())
 //! }
 //! ```
+//!
+//! # Automatic masking
+//!
+//! It is annoying to mask the payload each time before a write,
+//! and it will block us from using convenient functions like [`std::io::copy`].
+//!
+//! With `unsafe_auto_mask_write` fearure enabled, the provided immutable `&[u8]` will be casted
+//! to a mutable `&mut [u8]` then payload data can be automatically masked.
+//!
+//! This feature only have effects on [`StandardClient`](crate::role::StandardClient),
+//! where its inner mask key will be updated and used to mask the payload before each write.
+//! Other [`ClientRole`](crate::role::ClientRole) and [`ServerRole`](crate::role::ServerRole)
+//! are not affected. Related code lies in `src/stream/detail/write#L110-L138`.
+//!
 
 mod read;
 mod write;

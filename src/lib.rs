@@ -5,6 +5,7 @@
 #![feature(read_buf)]
 #![feature(ready_macro)]
 #![feature(future_poll_fn)]
+#![feature(min_specialization)]
 
 //! Lightweight websocket implement for proxy tools.
 //!
