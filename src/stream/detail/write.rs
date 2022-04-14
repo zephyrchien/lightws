@@ -151,7 +151,7 @@ mod test {
     use super::*;
     use crate::bleed::Store;
     use crate::frame::mask::*;
-    use crate::role::{Client, Server, StandardClient};
+    use crate::role::*;
 
     fn auto_mask<R: RoleHelper>(role: &mut R, buf: &[u8]) {
         let mut store = Store::new();
@@ -170,6 +170,26 @@ mod test {
             for _ in 0..8 {
                 auto_mask(&mut role, &buf2);
                 let key = role.write_mask_key().to_key();
+                apply_mask4(key, &mut buf);
+                assert_eq!(buf, buf2);
+            }
+        }
+    }
+
+    #[test]
+    fn auto_mask_active2() {
+        for i in 0..4096 {
+            let mut buf: Vec<u8> = std::iter::repeat(rand::random::<u8>()).take(i).collect();
+            let buf2 = buf.clone();
+            assert_eq!(buf.len(), i);
+
+            let mut role = FixedMaskClient::new();
+            let key = role.write_mask_key().to_key();
+
+            for _ in 0..8 {
+                auto_mask(&mut role, &buf2);
+                assert_eq!(key, role.write_mask_key().to_key());
+                
                 apply_mask4(key, &mut buf);
                 assert_eq!(buf, buf2);
             }
