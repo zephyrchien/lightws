@@ -34,6 +34,17 @@ impl Mask {
             None => 0x00,
         }
     }
+
+    /// Get inner mask key.
+    #[inline]
+    pub const fn to_key(&self) -> [u8; 4] {
+        use Mask::*;
+        match self {
+            Key(k) => *k,
+            Skip => [0u8; 4],
+            None => unreachable!(),
+        }
+    }
 }
 
 /// Generate a new random mask key.
