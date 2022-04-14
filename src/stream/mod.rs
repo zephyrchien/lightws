@@ -37,7 +37,7 @@
 //! can simply skip this step.
 //!
 //! The mask key is prepared by [`ClientRole`](crate::role::ClientRole),
-//! which can be set or fetched via [`Stream::set_write_mask_key`] and [`Stream::write_mask_key`].
+//! which can be set or fetched via [`Stream::set_mask_key`] and [`Stream::mask_key`].
 //!
 //! Example:
 //!
@@ -57,7 +57,7 @@
 //!     apply_mask4(key, &mut buf);
 //!
 //!     // set mask key for next write
-//!     ws.set_write_mask_key(key)?;
+//!     ws.set_mask_key(key)?;
 //!
 //!     // write some data
 //!     ws.write_all(&buf)?;
@@ -235,7 +235,7 @@ mod test {
     }
 
     pub fn make_frame<R: RoleHelper>(opcode: OpCode, len: usize) -> (Vec<u8>, Vec<u8>) {
-        make_frame_with_mask(opcode, R::new().write_mask_key(), len)
+        make_frame_with_mask(opcode, R::new().mask_key(), len)
     }
 
     // data is unmasked

@@ -97,7 +97,7 @@ impl<Role: RoleHelper> WriteFrameHeadTrait<Role> for WriteFrameHead<Role> {
         let head = FrameHead::new(
             Fin::Y,
             OpCode::Binary,
-            role.write_mask_key(),
+            role.mask_key(),
             PayloadLen::from_num(buf.len() as u64),
         );
         // The buffer is large enough to accommodate any kind of frame head.
@@ -121,10 +121,10 @@ impl<Role: AutoMaskClientRole> WriteFrameHeadTrait<Role> for WriteFrameHead<Role
     fn write_data_frame(store: &mut HeadStore, role: &mut Role, buf: &[u8]) {
         let key = if Role::UPDATE_MASK_KEY {
             let key = new_mask_key();
-            role.set_write_mask_key(key);
+            role.set_mask_key(key);
             key
         } else {
-            role.write_mask_key().to_key()
+            role.mask_key().to_key()
         };
 
         // !! const_cast a immutable reference
@@ -169,7 +169,7 @@ mod test {
 
             for _ in 0..8 {
                 auto_mask(&mut role, &buf2);
-                let key = role.write_mask_key().to_key();
+                let key = role.mask_key().to_key();
                 apply_mask4(key, &mut buf);
                 assert_eq!(buf, buf2);
             }
@@ -184,11 +184,11 @@ mod test {
             assert_eq!(buf.len(), i);
 
             let mut role = FixedMaskClient::new();
-            let key = role.write_mask_key().to_key();
+            let key = role.mask_key().to_key();
 
             for _ in 0..8 {
                 auto_mask(&mut role, &buf2);
-                assert_eq!(key, role.write_mask_key().to_key());
+                assert_eq!(key, role.mask_key().to_key());
 
                 apply_mask4(key, &mut buf);
                 assert_eq!(buf, buf2);

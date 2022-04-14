@@ -135,7 +135,7 @@ mod test {
 
             let io: Vec<u8> = Vec::new();
             let mut stream = Stream::new(io, R::new());
-            stream.set_write_mask_key(key).unwrap();
+            stream.set_mask_key(key).unwrap();
 
             let write_n = stream.write(&data).unwrap();
 
@@ -171,7 +171,7 @@ mod test {
             };
 
             let mut stream = Stream::new(io, R::new()).guard();
-            stream.set_write_mask_key(key).unwrap();
+            stream.set_mask_key(key).unwrap();
 
             stream.write_all(&data).unwrap();
 
@@ -205,7 +205,7 @@ mod test {
             assert_eq!(write_n, n);
 
             // manually mask frame data
-            let key = stream.write_mask_key().to_key();
+            let key = stream.mask_key().to_key();
             let head = make_head(OpCode::Binary, Mask::Key(key), n);
             apply_mask4(key, &mut data2);
 
@@ -239,7 +239,7 @@ mod test {
             stream.write_all(&data).unwrap();
 
             // manually mask frame data
-            let key = stream.write_mask_key().to_key();
+            let key = stream.mask_key().to_key();
             let head = make_head(OpCode::Binary, Mask::Key(key), n);
             apply_mask4(key, &mut data2);
 

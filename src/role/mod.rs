@@ -21,9 +21,9 @@ pub trait RoleHelper: Clone + Copy {
     const LONG_FRAME_HEAD_LEN: u8;
 
     fn new() -> Self;
-    fn write_mask_key(&self) -> Mask;
+    fn mask_key(&self) -> Mask;
     // by default this is a no-op
-    fn set_write_mask_key(&mut self, _: [u8; 4]) {}
+    fn set_mask_key(&mut self, _: [u8; 4]) {}
 }
 
 /// Client marker.

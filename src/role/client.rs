@@ -22,7 +22,7 @@ impl RoleHelper for Client {
     fn new() -> Self { Self {} }
 
     #[inline]
-    fn write_mask_key(&self) -> Mask { Mask::Skip }
+    fn mask_key(&self) -> Mask { Mask::Skip }
 }
 
 impl ClientRole for Client {}
@@ -41,10 +41,10 @@ impl RoleHelper for StandardClient {
     fn new() -> Self { Self([9u8; 4]) }
 
     #[inline]
-    fn write_mask_key(&self) -> Mask { Mask::Key(self.0) }
+    fn mask_key(&self) -> Mask { Mask::Key(self.0) }
 
     #[inline]
-    fn set_write_mask_key(&mut self, mask: [u8; 4]) { self.0 = mask; }
+    fn set_mask_key(&mut self, mask: [u8; 4]) { self.0 = mask; }
 }
 
 impl ClientRole for StandardClient {}
@@ -67,10 +67,10 @@ impl RoleHelper for FixedMaskClient {
     fn new() -> Self { Self([9u8; 4]) }
 
     #[inline]
-    fn write_mask_key(&self) -> Mask { Mask::Key(self.0) }
+    fn mask_key(&self) -> Mask { Mask::Key(self.0) }
 
     #[inline]
-    fn set_write_mask_key(&mut self, mask: [u8; 4]) { self.0 = mask; }
+    fn set_mask_key(&mut self, mask: [u8; 4]) { self.0 = mask; }
 }
 
 impl ClientRole for FixedMaskClient {}

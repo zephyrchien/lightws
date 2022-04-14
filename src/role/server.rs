@@ -15,7 +15,7 @@ impl RoleHelper for Server {
 
     /// Server should not mask the payload.
     #[inline]
-    fn write_mask_key(&self) -> Mask { Mask::None }
+    fn mask_key(&self) -> Mask { Mask::None }
 }
 
 impl ServerRole for Server {}
