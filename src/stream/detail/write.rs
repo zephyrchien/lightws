@@ -106,18 +106,27 @@ impl<Role: RoleHelper> WriteFrameHeadTrait<Role> for WriteFrameHead<Role> {
     }
 }
 
-// specialize
-#[cfg(feature = "unsafe_auto_mask_write")]
-impl WriteFrameHeadTrait<crate::role::StandardClient>
-    for WriteFrameHead<crate::role::StandardClient>
-{
-    #[inline]
-    fn write_data_frame(store: &mut HeadStore, role: &mut crate::role::StandardClient, buf: &[u8]) {
+cfg_if::cfg_if! {
+    if #[cfg(feature = "unsafe_auto_mask_write")] {
+        use crate::role::AutoMaskClientRole;
         use crate::bleed::const_cast;
         use crate::frame::{Mask, new_mask_key, apply_mask4};
+    }
+}
 
-        let key = new_mask_key();
-        role.set_write_mask_key(key);
+// specialize
+#[cfg(feature = "unsafe_auto_mask_write")]
+impl<Role: AutoMaskClientRole> WriteFrameHeadTrait<Role> for WriteFrameHead<Role> {
+    #[inline]
+    fn write_data_frame(store: &mut HeadStore, role: &mut Role, buf: &[u8]) {
+        let key = if Role::UPDATE_MASK_KEY {
+            let key = new_mask_key();
+            role.set_write_mask_key(key);
+            key
+        } else {
+            role.write_mask_key().to_key()
+        };
+
         // !! const_cast a immutable reference
         unsafe {
             let buf = const_cast(buf);
@@ -160,10 +169,7 @@ mod test {
 
             for _ in 0..8 {
                 auto_mask(&mut role, &buf2);
-                let key = match role.write_mask_key() {
-                    Mask::Key(k) => k,
-                    _ => unreachable!(),
-                };
+                let key = role.write_mask_key().to_key();
                 apply_mask4(key, &mut buf);
                 assert_eq!(buf, buf2);
             }

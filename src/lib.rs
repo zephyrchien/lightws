@@ -1,11 +1,11 @@
-// #![warn(missing_docs)]
+#![allow(incomplete_features)]
 #![feature(const_slice_from_raw_parts)]
 #![feature(const_mut_refs)]
 #![feature(const_slice_index)]
 #![feature(read_buf)]
 #![feature(ready_macro)]
 #![feature(future_poll_fn)]
-#![feature(min_specialization)]
+#![feature(specialization)]
 
 //! Lightweight websocket implement for proxy tools.
 //!

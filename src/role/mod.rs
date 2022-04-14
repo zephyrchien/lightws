@@ -1,6 +1,6 @@
 //! Markers.
 //!
-//! Markers are used to apply different strategies as a client or server.
+//! Markers are used to apply different strategies to clients or servers.
 //!
 //! For example, `Endpoint<IO, Client>::connect` is used to to open a connection,
 //! and returns `Stream<IO, Client>`; `Endpoint<IO, Server>` is used to accept
@@ -27,66 +27,22 @@ pub trait RoleHelper: Clone + Copy {
 }
 
 /// Client marker.
-pub trait ClientRole: RoleHelper {}
+pub trait ClientRole: RoleHelper {
+    const SHORT_FRAME_HEAD_LEN: u8 = 2;
+    const COMMON_FRAME_HEAD_LEN: u8 = 2 + 2;
+    const LONG_FRAME_HEAD_LEN: u8 = 2 + 8;
+}
 
 /// Server marker.
 pub trait ServerRole: RoleHelper {}
 
-/// Simple client using empty(fake) mask key.
-///
-/// With an empty mask key, the sender/receiver
-/// does not need to mask/unmask the payload.
-#[derive(Clone, Copy)]
-pub struct Client;
-
-/// Standard server.
-#[derive(Clone, Copy)]
-pub struct Server;
-
-/// Standard client using random mask key.
-#[derive(Clone, Copy)]
-pub struct StandardClient([u8; 4]);
-
-impl RoleHelper for Client {
-    const SHORT_FRAME_HEAD_LEN: u8 = 2;
-    const COMMON_FRAME_HEAD_LEN: u8 = 2 + 2;
-    const LONG_FRAME_HEAD_LEN: u8 = 2 + 8;
-
-    #[inline]
-    fn new() -> Self { Self {} }
-
-    #[inline]
-    fn write_mask_key(&self) -> Mask { Mask::Skip }
+/// Client marker.
+pub trait AutoMaskClientRole: ClientRole {
+    const UPDATE_MASK_KEY: bool;
 }
 
-impl RoleHelper for Server {
-    const SHORT_FRAME_HEAD_LEN: u8 = 2 + 4;
-    const COMMON_FRAME_HEAD_LEN: u8 = 2 + 2 + 4;
-    const LONG_FRAME_HEAD_LEN: u8 = 2 + 8 + 4;
+mod server;
+mod client;
 
-    #[inline]
-    fn new() -> Self { Self {} }
-
-    /// Server should not mask the payload.
-    #[inline]
-    fn write_mask_key(&self) -> Mask { Mask::None }
-}
-
-impl RoleHelper for StandardClient {
-    const SHORT_FRAME_HEAD_LEN: u8 = 2;
-    const COMMON_FRAME_HEAD_LEN: u8 = 2 + 2;
-    const LONG_FRAME_HEAD_LEN: u8 = 2 + 8;
-
-    #[inline]
-    fn new() -> Self { Self(crate::frame::mask::new_mask_key()) }
-
-    #[inline]
-    fn write_mask_key(&self) -> Mask { Mask::Key(self.0) }
-
-    #[inline]
-    fn set_write_mask_key(&mut self, mask: [u8; 4]) { self.0 = mask; }
-}
-
-impl ClientRole for Client {}
-impl ServerRole for Server {}
-impl ClientRole for StandardClient {}
+pub use server::Server;
+pub use client::{Client, StandardClient, FixedMaskClient};
