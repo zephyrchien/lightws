@@ -16,11 +16,11 @@ where
     /// Set mask for upcoming writes.
     /// An attempt to set mask during a write will fail with [`CtrlError::SetMaskInWrite`].
     #[inline]
-    pub fn set_write_mask_key(&mut self, mask: [u8; 4]) -> Result<(), CtrlError> {
+    pub fn set_write_mask_key(&mut self, key: [u8; 4]) -> Result<(), CtrlError> {
         // make sure this is a new fresh write
         if let WriteState::WriteHead(head) = self.write_state {
             if head.is_empty() {
-                self.role.set_write_mask_key(mask);
+                self.role.set_write_mask_key(key);
                 return Ok(());
             }
         }
