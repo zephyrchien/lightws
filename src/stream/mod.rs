@@ -73,7 +73,7 @@
 //! With `unsafe_auto_mask_write` fearure enabled, the provided immutable `&[u8]` will be casted
 //! to a mutable `&mut [u8]` then payload data can be automatically masked.
 //!
-//! This feature only have effects on [`AutoMaskClientRole`](crate::role::AutoMaskClientRole),
+//! This feature only has effects on [`AutoMaskClientRole`](crate::role::AutoMaskClientRole),
 //! where its inner mask key may be updated (depends on
 //! [`AutoMaskClientRole::UPDATE_MASK_KEY`](crate::role::AutoMaskClientRole::UPDATE_MASK_KEY))
 //! and used to mask the payload before each write.
