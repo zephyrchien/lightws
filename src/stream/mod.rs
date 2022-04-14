@@ -121,7 +121,6 @@ pub struct Stream<IO, Role, Guard = Direct> {
     read_state: ReadState,
     write_state: WriteState,
     heartbeat: HeartBeat,
-    _marker: PhantomData<Role>,
     __marker: PhantomData<Guard>,
 }
 
@@ -156,7 +155,6 @@ impl<IO, Role> Stream<IO, Role> {
             read_state: ReadState::new(),
             write_state: WriteState::new(),
             heartbeat: HeartBeat::new(),
-            _marker: PhantomData,
             __marker: PhantomData,
         }
     }
@@ -170,7 +168,6 @@ impl<IO, Role> Stream<IO, Role> {
             read_state: self.read_state,
             write_state: self.write_state,
             heartbeat: self.heartbeat,
-            _marker: PhantomData,
             __marker: PhantomData,
         }
     }
