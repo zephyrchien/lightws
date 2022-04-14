@@ -56,7 +56,7 @@ impl<IO: Write, Role: RoleHelper> Write for Stream<IO, Role, Guarded> {
 #[cfg(test)]
 mod test {
     use super::*;
-    use super::super::test::{LimitReadWriter, make_frame};
+    use super::super::test::*;
     use crate::frame::*;
     use crate::role::*;
     use std::io::Write;
@@ -117,6 +117,145 @@ mod test {
             for limit in 1..=1024 {
                 write::<Client>(i, limit);
                 write::<Server>(i, limit);
+            }
+        }
+    }
+
+    #[test]
+    #[cfg(feature = "unsafe_auto_mask_write")]
+    fn write_to_stream_auto_mask_fixed() {
+        fn write<R: RoleHelper>(n: usize) {
+            let key = new_mask_key();
+
+            let (mut frame, data) = make_frame_with_mask(OpCode::Binary, Mask::Key(key), n);
+
+            // manually mask frame data
+            let offset = frame.len() - n;
+            apply_mask4(key, &mut frame[offset..]);
+
+            let io: Vec<u8> = Vec::new();
+            let mut stream = Stream::new(io, R::new());
+            stream.set_write_mask_key(key).unwrap();
+
+            let write_n = stream.write(&data).unwrap();
+
+            assert_eq!(write_n, n);
+
+            assert_eq!(stream.as_ref(), &frame);
+        }
+        for i in 1..=2 {
+            write::<FixedMaskClient>(i);
+        }
+
+        for i in [65536, 65537, 100000] {
+            write::<FixedMaskClient>(i);
+        }
+    }
+
+    #[test]
+    #[cfg(feature = "unsafe_auto_mask_write")]
+    fn write_to_limit_stream_auto_mask_fixed() {
+        fn write<R: RoleHelper>(n: usize, limit: usize) {
+            let key = new_mask_key();
+            let (mut frame, data) = make_frame_with_mask(OpCode::Binary, Mask::Key(key), n);
+
+            // manually mask frame data
+            let offset = frame.len() - n;
+            apply_mask4(key, &mut frame[offset..]);
+
+            let io = LimitReadWriter {
+                buf: Vec::new(),
+                rlimit: 0,
+                wlimit: limit,
+                cursor: 0,
+            };
+
+            let mut stream = Stream::new(io, R::new()).guard();
+            stream.set_write_mask_key(key).unwrap();
+
+            stream.write_all(&data).unwrap();
+
+            assert_eq!(&stream.as_ref().buf, &frame);
+        }
+
+        for i in 1..=256 {
+            for limit in 1..=300 {
+                write::<FixedMaskClient>(i, limit);
+            }
+        }
+
+        for i in [65536, 65537, 100000] {
+            for limit in 1..=1024 {
+                write::<FixedMaskClient>(i, limit);
+            }
+        }
+    }
+
+    #[test]
+    #[cfg(feature = "unsafe_auto_mask_write")]
+    fn write_to_stream_auto_mask_updated() {
+        fn write<R: RoleHelper>(n: usize) {
+            let data = make_data(n);
+            let mut data2 = data.clone();
+
+            let io: Vec<u8> = Vec::new();
+            let mut stream = Stream::new(io, R::new());
+
+            let write_n = stream.write(&data).unwrap();
+            assert_eq!(write_n, n);
+
+            // manually mask frame data
+            let key = stream.write_mask_key().to_key();
+            let head = make_head(OpCode::Binary, Mask::Key(key), n);
+            apply_mask4(key, &mut data2);
+
+            assert_eq!(stream.as_ref()[..head.len()], head);
+            assert_eq!(stream.as_ref()[head.len()..], data2);
+        }
+        for i in 1..=2 {
+            write::<StandardClient>(i);
+        }
+
+        for i in [65536, 65537, 100000] {
+            write::<StandardClient>(i);
+        }
+    }
+
+    #[test]
+    #[cfg(feature = "unsafe_auto_mask_write")]
+    fn write_to_limit_stream_auto_mask_updated() {
+        fn write<R: RoleHelper>(n: usize, limit: usize) {
+            let data = make_data(n);
+            let mut data2 = data.clone();
+
+            let io = LimitReadWriter {
+                buf: Vec::new(),
+                rlimit: 0,
+                wlimit: limit,
+                cursor: 0,
+            };
+
+            let mut stream = Stream::new(io, R::new()).guard();
+            stream.write_all(&data).unwrap();
+
+            // manually mask frame data
+            let key = stream.write_mask_key().to_key();
+            let head = make_head(OpCode::Binary, Mask::Key(key), n);
+            apply_mask4(key, &mut data2);
+
+            assert_eq!(stream.as_ref().buf[..head.len()], head);
+            assert_eq!(stream.as_ref().buf[head.len()..], data2);
+        }
+
+        for i in 1..=256 {
+            for limit in 1..=300 {
+                write::<StandardClient>(i, limit);
+            }
+        }
+
+        for i in [65536, 65537, 100000] {
+            for limit in 1..=1024 {
+                write::<StandardClient>(i, limit);
             }
         }
     }

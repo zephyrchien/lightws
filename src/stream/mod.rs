@@ -219,22 +219,32 @@ mod test {
         fn flush(&mut self) -> Result<()> { Ok(()) }
     }
 
-    pub fn make_frame<R: RoleHelper>(opcode: OpCode, len: usize) -> (Vec<u8>, Vec<u8>) {
-        let data: Vec<u8> = std::iter::repeat(rand::random::<u8>()).take(len).collect();
-        let mut data2 = data.clone();
-
+    pub fn make_head(opcode: OpCode, mask: Mask, len: usize) -> Vec<u8> {
         let mut tmp = vec![0; 14];
-        let head = FrameHead::new(
-            Fin::Y,
-            opcode,
-            R::write_mask_key(&R::new()),
-            PayloadLen::from_num(len as u64),
-        );
+        let head = FrameHead::new(Fin::Y, opcode, mask, PayloadLen::from_num(len as u64));
 
         let head_len = head.encode(&mut tmp).unwrap();
-        let mut frame = Vec::new();
-        let write_n = frame.write(&tmp[..head_len]).unwrap();
+        let mut head = Vec::new();
+        let write_n = head.write(&tmp[..head_len]).unwrap();
         assert_eq!(write_n, head_len);
+        head
+    }
+
+    pub fn make_data(len: usize) -> Vec<u8> {
+        std::iter::repeat(rand::random::<u8>()).take(len).collect()
+    }
+
+    pub fn make_frame<R: RoleHelper>(opcode: OpCode, len: usize) -> (Vec<u8>, Vec<u8>) {
+        make_frame_with_mask(opcode, R::new().write_mask_key(), len)
+    }
+
+    // data is unmasked
+    pub fn make_frame_with_mask(opcode: OpCode, mask: Mask, len: usize) -> (Vec<u8>, Vec<u8>) {
+        let data = make_data(len);
+        let mut data2 = data.clone();
+
+        let mut frame = make_head(opcode, mask, len);
+        let head_len = frame.len();
 
         frame.append(&mut data2);
         assert_eq!(frame.len(), len + head_len);
