@@ -38,7 +38,7 @@ impl RoleHelper for StandardClient {
     client_consts!();
 
     #[inline]
-    fn new() -> Self { Self([9u8; 4]) }
+    fn new() -> Self { Self([0u8; 4]) }
 
     #[inline]
     fn mask_key(&self) -> Mask { Mask::Key(self.0) }
