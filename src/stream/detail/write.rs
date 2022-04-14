@@ -189,7 +189,7 @@ mod test {
             for _ in 0..8 {
                 auto_mask(&mut role, &buf2);
                 assert_eq!(key, role.write_mask_key().to_key());
-                
+
                 apply_mask4(key, &mut buf);
                 assert_eq!(buf, buf2);
             }

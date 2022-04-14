@@ -38,7 +38,7 @@ impl RoleHelper for StandardClient {
     client_consts!();
 
     #[inline]
-    fn new() -> Self { Self(crate::frame::mask::new_mask_key()) }
+    fn new() -> Self { Self([9u8; 4]) }
 
     #[inline]
     fn write_mask_key(&self) -> Mask { Mask::Key(self.0) }
@@ -64,7 +64,7 @@ impl RoleHelper for FixedMaskClient {
     client_consts!();
 
     #[inline]
-    fn new() -> Self { Self(crate::frame::mask::new_mask_key()) }
+    fn new() -> Self { Self([9u8; 4]) }
 
     #[inline]
     fn write_mask_key(&self) -> Mask { Mask::Key(self.0) }
