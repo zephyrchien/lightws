@@ -55,7 +55,7 @@ impl<IO: Read + Write, Role: ClientRole> Endpoint<IO, Role> {
     ///
     /// This function is a combination of [`send_request`](Self::send_request)
     /// and [`recv_response`](Self::recv_response), without accessing [`Response`].
-    /// it will block until the handshake completes, or an error occurs.
+    /// It will block until the handshake completes, or an error occurs.
     pub fn connect(mut io: IO, buf: &mut [u8], host: &str, path: &str) -> Result<Stream<IO, Role>> {
         let sec_key = new_sec_key();
         let sec_accept = derive_accept_key(&sec_key);

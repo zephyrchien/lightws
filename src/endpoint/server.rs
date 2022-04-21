@@ -55,7 +55,7 @@ impl<IO: Read + Write, Role: ServerRole> Endpoint<IO, Role> {
     ///
     /// This function is a combination of [`recv_request`](Self::recv_request)
     /// and [`send_response`](Self::send_response), without accessing [`Request`].
-    /// it will block until the handshake completes, or an error occurs.    
+    /// It will block until the handshake completes, or an error occurs.    
     pub fn accept(mut io: IO, buf: &mut [u8], host: &str, path: &str) -> Result<Stream<IO, Role>> {
         // recv
         let mut other_headers = HttpHeader::new_storage();

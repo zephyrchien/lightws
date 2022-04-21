@@ -90,7 +90,7 @@ mod detail;
 mod special;
 
 cfg_if::cfg_if! {
-    if #[cfg(feature = "tokio")] {
+    if #[cfg(feature = "async")] {
         mod async_read;
         mod async_write;
     }
