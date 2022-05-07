@@ -7,7 +7,7 @@
 #![feature(future_poll_fn)]
 #![feature(specialization)]
 
-//! Lightweight websocket implement for proxy tools.
+//! Lightweight websocket implement for stream transmission.
 //!
 //! ## Features
 //!

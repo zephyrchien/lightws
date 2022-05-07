@@ -1,12 +1,12 @@
 [package]
 name = "lightws"
-version = "0.6.3"
+version = "0.6.4"
 authors = ["zephyr <i@zephyr.moe>"]
 description = "Lightweight websocket implement for stream transmission."
 repository = "https://github.com/zephyrchien/lightws"
 readme = "README.md"
 documentation = "https://docs.rs/lightws"
-keywords = ["websocket", "network", "proxy"]
+keywords = ["websocket", "network", "stream", "async"]
 edition = "2021"
 license = "MIT"
 
