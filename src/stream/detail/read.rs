@@ -164,7 +164,7 @@ where
                             }
                             // move forward
                             unsafe {
-                                std::ptr::copy_nonoverlapping(
+                                std::ptr::copy(
                                     buf.as_ptr().add(beg),
                                     buf.as_mut_ptr().add(processed),
                                     data_len,
