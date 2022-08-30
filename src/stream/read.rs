@@ -58,7 +58,7 @@ impl<IO: Read, Role: RoleHelper> Read for Stream<IO, Role, Guarded> {
     /// Override default implement, extend reserved buffer size,
     /// so that there is enough space to accommodate frame head.
     fn read_to_end(&mut self, buf: &mut Vec<u8>) -> Result<usize> {
-        use std::io::ReadBuf;
+        use std::io::BorrowedBuf;
         use std::io::ErrorKind;
 
         let start_len = buf.len();
@@ -70,29 +70,30 @@ impl<IO: Read, Role: RoleHelper> Read for Stream<IO, Role, Guarded> {
                 buf.reserve(32); // buf is full, need more space
             }
 
-            let mut read_buf = ReadBuf::uninit(buf.spare_capacity_mut());
+            let mut read_buf: BorrowedBuf<'_> = buf.spare_capacity_mut().into();
 
             // SAFETY: These bytes were initialized but not filled in the previous loop
             unsafe {
-                read_buf.assume_init(initialized);
+                read_buf.set_init(initialized);
             }
 
-            match self.read_buf(&mut read_buf) {
+            let mut cursor = read_buf.unfilled();
+            match self.read_buf(cursor.reborrow()) {
                 Ok(()) => {}
                 Err(e) if e.kind() == ErrorKind::Interrupted => continue,
                 Err(e) => return Err(e),
             }
 
-            if read_buf.filled_len() == 0 {
+            if cursor.written() == 0 {
                 return Ok(buf.len() - start_len);
             }
 
             // store how much was initialized but not filled
-            initialized = read_buf.initialized_len() - read_buf.filled_len();
-            let new_len = read_buf.filled_len() + buf.len();
+            initialized = cursor.init_ref().len();
 
-            // SAFETY: ReadBuf's invariants mean this much memory is init
+            // SAFETY: BorrowedBuf's invariants mean this much memory is init
             unsafe {
+                let new_len = read_buf.filled().len() + buf.len();
                 buf.set_len(new_len);
             }
 
