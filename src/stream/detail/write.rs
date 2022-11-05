@@ -35,7 +35,7 @@ where
             // frame head(maybe partial) + payload
             let iovec = [IoSlice::new(head_store.read()), IoSlice::new(buf)];
             let write_n = ready!(write(&mut stream.io, &iovec))?;
-            let head_len = head_store.rd_left() as usize;
+            let head_len = head_store.rd_left();
 
             // write zero ?
             if write_n == 0 {
