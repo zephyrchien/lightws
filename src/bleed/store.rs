@@ -69,9 +69,6 @@ impl<const N: usize> Store<N> {
     pub const fn is_empty(&self) -> bool { self.wr == 0 }
 
     #[inline]
-    pub const fn get(&self, idx: usize) -> u8 { unsafe { *self.buf.get_unchecked(idx) } }
-
-    #[inline]
     pub const fn read(&self) -> &[u8] {
         unsafe { slice(&self.buf, self.rd as usize, self.wr as usize) }
     }
