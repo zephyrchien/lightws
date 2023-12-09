@@ -1,6 +1,6 @@
 [package]
 name = "lightws"
-version = "0.6.9"
+version = "0.6.10"
 authors = ["zephyr <i@zephyr.moe>"]
 description = "Lightweight websocket implement for stream transmission."
 repository = "https://github.com/zephyrchien/lightws"
@@ -19,12 +19,12 @@ unsafe_auto_mask_write = []
 cfg-if = "1"
 rand = "0.8"
 sha1 = "0.10"
-base64 = "0.20.0-alpha.1"
+base64 = "0.21"
 httparse = "1"
 tokio = { version = "1", optional = true }
 
 
 [dev-dependencies]
 log = "0.4"
-env_logger = "0.9"
+env_logger = "0.10"
 tokio = { version = "1", features = ["full"] }

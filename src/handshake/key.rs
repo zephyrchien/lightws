@@ -1,7 +1,8 @@
 //! Key exchange.
 
 use super::GUID;
-use base64::engine::DEFAULT_ENGINE;
+use base64::Engine;
+use base64::engine::general_purpose::STANDARD;
 use sha1::{Digest, Sha1};
 
 /// Generate a new `sec-websocket-key`.
@@ -9,7 +10,7 @@ use sha1::{Digest, Sha1};
 pub fn new_sec_key() -> [u8; 24] {
     let input: [u8; 16] = rand::random();
     let mut output = [0_u8; 24];
-    base64::encode_engine_slice(input, &mut output, &DEFAULT_ENGINE);
+    Engine::encode_slice(&STANDARD, input, &mut output).unwrap();
     output
 }
 
@@ -21,7 +22,7 @@ pub fn derive_accept_key(sec_key: &[u8]) -> [u8; 28] {
     sha1.update(GUID);
     let input = sha1.finalize();
     let mut output = [0_u8; 28];
-    base64::encode_engine_slice(input, &mut output, &DEFAULT_ENGINE);
+    Engine::encode_slice(&STANDARD, input, &mut output).unwrap();
     output
 }
 
