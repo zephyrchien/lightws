@@ -3,6 +3,7 @@
 #![feature(const_slice_index)]
 #![feature(const_slice_from_raw_parts_mut)]
 #![feature(read_buf)]
+#![feature(core_io_borrowed_buf)]
 #![feature(specialization)]
 
 //! Lightweight websocket implement for stream transmission.

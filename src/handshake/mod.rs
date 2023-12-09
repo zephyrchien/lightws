@@ -139,8 +139,8 @@ macro_rules! handshake_check {
     };
 }
 
-pub(self) use write_header;
-pub(self) use handshake_check;
+use write_header;
+use handshake_check;
 
 #[inline]
 fn filter_header<'h>(

@@ -10,7 +10,7 @@ use crate::frame::mask::apply_mask4;
 use crate::error::FrameError;
 
 pub fn read_some<F, IO, Role, Guard>(
-    mut stream: &mut Stream<IO, Role, Guard>,
+    stream: &mut Stream<IO, Role, Guard>,
     mut read: F,
     buf: &mut [u8],
 ) -> Poll<Result<usize>>

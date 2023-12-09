@@ -11,7 +11,7 @@ use crate::frame::FrameHead;
 use crate::frame::{Fin, OpCode, PayloadLen};
 
 pub fn write_some<F, IO, Role, Guard>(
-    mut stream: &mut Stream<IO, Role, Guard>,
+    stream: &mut Stream<IO, Role, Guard>,
     mut write: F,
     buf: &[u8],
 ) -> Poll<Result<usize>>
