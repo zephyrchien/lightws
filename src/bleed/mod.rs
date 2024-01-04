@@ -25,10 +25,11 @@ pub(crate) const unsafe fn slice_to_array<T, const N: usize>(slice: &[T]) -> &[T
 
 #[inline]
 #[allow(unused)]
+#[allow(invalid_reference_casting)]
 #[allow(clippy::mut_from_ref)]
 pub(crate) const unsafe fn const_cast<T: ?Sized>(x: &T) -> &mut T {
     let const_ptr = x as *const T;
-    let mut_ptr = const_ptr as *mut T;
+    let mut_ptr = const_ptr.cast_mut();
     &mut *mut_ptr
 }
 

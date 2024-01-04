@@ -1,4 +1,5 @@
 #![allow(incomplete_features)]
+#![allow(clippy::blocks_in_conditions)]
 #![feature(const_mut_refs)]
 #![feature(const_slice_index)]
 #![feature(const_slice_from_raw_parts_mut)]
