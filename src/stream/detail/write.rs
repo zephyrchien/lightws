@@ -127,9 +127,11 @@ impl<Role: AutoMaskClientRole> WriteFrameHeadTrait<Role> for WriteFrameHead<Role
             role.mask_key().to_key()
         };
 
-        // !! const_cast a immutable reference
         unsafe {
+            // !! const_cast a immutable reference
             let buf = const_cast(buf);
+            // prevent too aggresive optimizations
+            let buf = std::hint::black_box(buf);
             apply_mask4(key, buf);
         }
 
