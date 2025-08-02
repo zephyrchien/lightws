@@ -89,7 +89,7 @@ impl<IO: Read, Role: RoleHelper> Read for Stream<IO, Role, Guarded> {
             }
 
             // store how much was initialized but not filled
-            initialized = cursor.init_ref().len();
+            initialized = cursor.init_mut().len();
 
             // SAFETY: BorrowedBuf's invariants mean this much memory is init
             unsafe {
