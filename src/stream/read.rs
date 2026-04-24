@@ -58,65 +58,25 @@ impl<IO: Read, Role: RoleHelper> Read for Stream<IO, Role, Guarded> {
     /// Override default implement, extend reserved buffer size,
     /// so that there is enough space to accommodate frame head.
     fn read_to_end(&mut self, buf: &mut Vec<u8>) -> Result<usize> {
-        use std::io::BorrowedBuf;
         use std::io::ErrorKind;
 
-        let start_len = buf.len();
-        let start_cap = buf.capacity();
-
-        let mut initialized = 0; // Extra initialized bytes from previous loop iteration
+        let begin_len = buf.len();
         loop {
-            if buf.len() < buf.capacity() + 14 {
-                buf.reserve(32); // buf is full, need more space
+            // reserve enough space to accommodate frame header
+            if buf.len() + 14 > buf.capacity() {
+                buf.reserve(32);
             }
-
-            let mut read_buf: BorrowedBuf<'_> = buf.spare_capacity_mut().into();
-
-            // SAFETY: These bytes were initialized but not filled in the previous loop
             unsafe {
-                read_buf.set_init(initialized);
-            }
-
-            let mut cursor = read_buf.unfilled();
-            match self.read_buf(cursor.reborrow()) {
-                Ok(()) => {}
-                Err(e) if e.kind() == ErrorKind::Interrupted => continue,
-                Err(e) => return Err(e),
-            }
-
-            if cursor.written() == 0 {
-                return Ok(buf.len() - start_len);
-            }
-
-            // store how much was initialized but not filled
-            initialized = cursor.init_mut().len();
-
-            // SAFETY: BorrowedBuf's invariants mean this much memory is init
-            unsafe {
-                let new_len = read_buf.filled().len() + buf.len();
-                buf.set_len(new_len);
-            }
-
-            if buf.len() == buf.capacity() && buf.capacity() == start_cap {
-                // The buffer might be an exact fit. Let's read into a probe buffer
-                // and see if it returns `Ok(0)`. If so, we've avoided an
-                // unnecessary doubling of the capacity. But if not, append the
-                // probe buffer to the primary buffer and let its capacity grow.
-                let mut probe = [0u8; 32];
-
-                loop {
-                    match self.read(&mut probe) {
-                        Ok(0) => return Ok(buf.len() - start_len),
-                        Ok(n) => {
-                            buf.extend_from_slice(&probe[..n]);
-                            break;
-                        }
-                        Err(ref e) if e.kind() == ErrorKind::Interrupted => continue,
-                        Err(e) => return Err(e),
-                    }
-                }
+                let n = match self.read(buf.spare_capacity_mut().assume_init_mut()) {
+                    Ok(0) => break,
+                    Ok(n) => n,
+                    Err(e) if e.kind() == ErrorKind::Interrupted => continue,
+                    Err(e) => return Err(e),
+                };
+                buf.set_len(buf.len() + n);
             }
         }
+        Ok(buf.len() - begin_len)
     }
 }
 

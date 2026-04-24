@@ -1,7 +1,5 @@
 #![allow(incomplete_features)]
 #![allow(clippy::blocks_in_conditions)]
-#![feature(read_buf)]
-#![feature(core_io_borrowed_buf)]
 #![feature(specialization)]
 
 //! Lightweight websocket implement for stream transmission.
