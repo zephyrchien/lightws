@@ -218,7 +218,7 @@ pub mod static_headers {
 
 #[cfg(test)]
 mod test {
-    use rand::prelude::*;
+    use {rand::rng, rand::prelude::*};
 
     pub const TEMPLATE_HEADERS: &str = "\
         host: www.example.com\r\n\
@@ -230,11 +230,11 @@ mod test {
 
     pub fn make_headers(count: usize, max_len: usize, headers: &str) -> String {
         fn rand_ascii() -> char {
-            let x: u8 = thread_rng().gen_range(1..=4);
+            let x: u8 = rng().random_range(1..=4);
             let ch: u8 = match x {
-                1 => thread_rng().gen_range(b'0'..=b'9'),
-                2 => thread_rng().gen_range(b'A'..=b'Z'),
-                3 => thread_rng().gen_range(b'a'..=b'z'),
+                1 => rng().random_range(b'0'..=b'9'),
+                2 => rng().random_range(b'A'..=b'Z'),
+                3 => rng().random_range(b'a'..=b'z'),
                 4 => b'-',
                 _ => unreachable!(),
             };
@@ -251,8 +251,8 @@ mod test {
 
         fn make_header(max_len: usize) -> String {
             let mut s = String::with_capacity(256);
-            let name_len: usize = thread_rng().gen_range(1..=max_len);
-            let value_len: usize = thread_rng().gen_range(1..=max_len);
+            let name_len: usize = rng().random_range(1..=max_len);
+            let value_len: usize = rng().random_range(1..=max_len);
             s.push_str(&format!(
                 "{}: {}\r\n",
                 rand_str(name_len),
@@ -268,7 +268,7 @@ mod test {
         for _ in 0..count {
             s.push(make_header(max_len));
         }
-        s.shuffle(&mut thread_rng());
+        s.shuffle(&mut rng());
         s.concat()
     }
 }

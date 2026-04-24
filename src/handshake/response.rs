@@ -224,12 +224,12 @@ mod test {
     use super::*;
     use super::super::HttpHeader;
     use super::super::test::{make_headers, TEMPLATE_HEADERS};
-    use rand::prelude::*;
+    use {rand::rng, rand::prelude::*};
 
     #[test]
     fn server_handshake() {
         for i in 0..64 {
-            let hdr_len: usize = thread_rng().gen_range(1..128);
+            let hdr_len: usize = rng().random_range(1..128);
             let headers = format!(
                 "HTTP/1.1 101 Switching Protocols\r\n{}\r\n",
                 make_headers(i, hdr_len, TEMPLATE_HEADERS)
