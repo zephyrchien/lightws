@@ -17,14 +17,14 @@ unsafe_auto_mask_write = []
 
 [dependencies]
 cfg-if = "1"
-rand = "0.8"
-sha1 = "0.10"
-base64 = "0.21"
+rand = "0.10"
+sha1 = "0.11"
+base64 = "0.22"
 httparse = "1"
 tokio = { version = "1", optional = true }
 
 
 [dev-dependencies]
 log = "0.4"
-env_logger = "0.10"
+env_logger = "0.11"
 tokio = { version = "1", features = ["full"] }
